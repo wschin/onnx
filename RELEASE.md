@@ -42,14 +42,14 @@ involves working well with others.
 
 | Assigned To | Due Date | Status | Description |
 | --- | --- | --- | --- |
-| dbox        | 2017-10-31 | Active | Ensure all unions that require a discriminator have one. | 
+| dbox        | 2017-10-31 | PR#167 | Ensure all unions that require a discriminator have one. | 
 | dbox        | 2017-11-03 | Active | Define and document bug bar. | 
 | dbox        | 2017-11-06 | Active | Finish versioning spec in master. |
 | mruiz       | 2017-11-03 | Active | Finish release management spec in master. |
 | mruiz       | 2017-11-06 | Active | Establish and document test plan with dmytro. |
-| dbox        | 2017-11-03 | In PR (xx) | ONNX: SemVer prerelease and build metadata not supported in IR. |
+| dbox        | 2017-11-03 | PR#160 | ONNX: SemVer prerelease and build metadata not supported in IR. |
 | dbox        | 2017-11-05 | Active | ONNX: Versioning policy for changing wire-compatible data types undefined. |
-| dbox        | 2017-11-05 | In PR (xx) | ONNX: Versioning mechanism and policy undefined for operators - review and ACK|comment|counter Edward's proposal.|
+| dbox        | 2017-11-05 | PR#148 | ONNX: Versioning mechanism and policy undefined for operators - review and ACK|comment|counter Edward's proposal.|
 | edward      | 2017-11-05 | Active | ONNX: Versioning impact of transitive dependencies undefined. |
 | dbox        | 2017-11-10 | Active | ONNX: Rules for how type and shape inferencing are undefined. |
 | stuart      | 2017-11-05 | Active | Operator inventory list needs to be defined. |
