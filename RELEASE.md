@@ -5,7 +5,7 @@ This file contains the exit criteria, schedule, and work list for release 0.3.
 ## Release Goals
 
 * Establish and document the model we will use for ONNX releases going forward.
-* Establish the versioning rules for this and subsequent ONNX releases.
+* Establish and document the versioning rules for this and subsequent ONNX releases.
 * Provide a stable (yet not final) version of ONNX that the community can engineer against and early products can ship against.
 * Produce a 1.0.0 of the IR and focus future innovation on operators/algorithms.
 * Define the minimal pre-1.0.0 operator set that will unblock key early software releases.  
@@ -15,11 +15,11 @@ This file contains the exit criteria, schedule, and work list for release 0.3.
 
 * This release SHOULD NOT have functionality that isn't needed to satisfy the release goals above.
 * This release MUST define IR_VERSION 1.0.0 to slow down churn on the abstract model and protobuf format.
-* This release MUST NOT define operators with 1.0.0 or later to avoid premature calsification. 
+* This release MUST NOT define operators with 1.0.0 or later to avoid premature calcification. 
 * This release MUST define the following operators as "production":
     * **TBD**: *eta for first draft 2017-11-3, finalize by 11-10*
 * This release MUST NOT define any operators as "production" that are not in the list above.
-* This release MAY define a small nubmer of "experimental" operators that conformant implementations MAY elect to not implement. 
+* This release MAY define a small number of "experimental" operators that conformant implementations MAY elect to not implement. 
 * This release MUST have an IR that provides sufficient functionality to support non-DNN ML operators naturally. 
 
 ## Schedule
@@ -30,7 +30,7 @@ This file contains the exit criteria, schedule, and work list for release 0.3.
 | 2017-11-10 | Production operator list is locked. | 
 | 2017-11-13 | Unrestricted merges from master stop. All changes go through PRs and merged by RM. | 
 | 2017-11-17 | Production operator signatures and semantics are locked. | 
-| 2017-11-22 | 0.3.0-rc build. Critical bug fixes only after this point.  | 
+| 2017-11-20 | 0.3.0-rc build. Critical bug fixes only after this point.  | 
 | 2017-12-01 | Final 0.3.0 build. All fixes beyond this are patches and subject to ONNX versioning rules.  IR_VERSION is 1.0.0, operator versions are 0.n.n.| 
 
 
