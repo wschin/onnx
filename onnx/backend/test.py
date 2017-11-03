@@ -22,7 +22,7 @@ M = 10
 S = 5
 const2_np = np.random.randn(S, S)
 const2_onnx = onnx.helper.make_tensor("const2",
-                                      onnx.onnx_pb2.TensorProto.FLOAT,
+                                      onnx.TensorProto.FLOAT,
                                       (S, S),
                                       const2_np.flatten().astype(float))
 
@@ -35,7 +35,6 @@ node_tests = [
     ("test_constant", N("Constant", value=const2_onnx), lambda: const2_np, []),
     # TODO: Are we actually supporting other dot modes?  In that case, some fancy
     # footwork is necessary...
-    ("test_dot", N("Dot"), np.dot, [(S, M), (M, L)]),
     ("test_relu", N("Relu"), lambda x: np.clip(x, 0, np.inf), [(S, S, S)]),
     ("test_constant_pad",
      N("Pad", mode='constant', value=1.2, paddings=[0, 0, 0, 0, 1, 2, 3, 4]),
@@ -65,6 +64,19 @@ node_tests = [
     ("test_slice_default_axes",
      N("Slice", starts=[0, 0, 3], ends=[L, M, 4]),
      lambda x: x[:, :, 3:4], [(L, M, S)]),
+    ("test_matmul_2d",
+     N("MatMul"),
+     np.matmul,
+     [(M, S), (S, M)]),
+    ("test_matmul_3d",
+      N("MatMul"),
+      np.matmul,
+      [(1, M, S), (1, S, M)]),
+    ("test_matmul_4d",
+     N("MatMul"),
+     np.matmul,
+     [(1, 2, S, M),
+      (1, 2, M, S)]),
     # TODO: Add all the other operators
 ] + test_rnn.node_tests
 
@@ -92,8 +104,7 @@ class BackendTest(object):
 
         self.backend = backend
         self._base_case = TestsContainer
-        if parent_module:
-            self._parent_module = parent_module
+        self._parent_module = parent_module
         # List of test cases to be applied on the parent scope
         # Example usage: globals().update(BackendTest(backend).test_cases)
         self.test_cases = {}
