@@ -26,12 +26,13 @@ This file contains the exit criteria, schedule, and work list for release 0.3.
 
 | Date | Outcome |
 | --- | --- |
-| 2017-11-10 | IR_VERSION is 1.0.0-beta.1. Critical bug fix only. | 
-| 2017-11-10 | Production operator list is locked. | 
-| 2017-11-13 | Unrestricted merges from master stop. All changes go through PRs and merged by RM. | 
-| 2017-11-17 | Production operator signatures and semantics are locked. | 
-| 2017-11-20 | 0.3.0-rc build. Critical bug fixes only after this point.  | 
-| 2017-12-01 | Final 0.3.0 build. All fixes beyond this are patches and subject to ONNX versioning rules.  IR_VERSION is 1.0.0, operator versions are 0.n.n.| 
+| 2017-11-11 | IR_VERSION is 0.0.4. Critical bug fix only. |
+| 2017-11-13 | Release artifacts posted with 0.3.0-beta tag. |
+| 2017-11-14 | Production operator list is locked. |
+| 2017-11-15 | IR_VERSION is 1.0.0. |
+| 2017-11-17 | Production operator signatures and semantics are locked. |
+| 2017-11-20 | 0.3.0-rc build. Critical bug fixes only after this point.  |
+| 2017-12-01 | Final 0.3.0 build. All fixes beyond this are patches and subject to ONNX versioning rules.  IR_VERSION is 1.0.0, operator versions are 0.n.n. |
 
 
 ## Work Items
@@ -42,18 +43,8 @@ involves working well with others.
 
 | Assigned To | Due Date | Status | Description |
 | --- | --- | --- | --- |
-| dbox        | 2017-10-31 | PR#167 | Ensure all unions that require a discriminator have one. | 
-| dbox        | 2017-11-03 | Active | Define and document bug bar. | 
-| dbox        | 2017-11-06 | Active | Finish versioning spec in master. |
-| mruiz       | 2017-11-03 | Active | Finish release management spec in master. |
-| mruiz       | 2017-11-06 | Active | Establish and document test plan with dmytro. |
-| dbox        | 2017-11-03 | PR#160 | ONNX: SemVer prerelease and build metadata not supported in IR. |
 | dbox        | 2017-11-05 | Active | ONNX: Versioning policy for changing wire-compatible data types undefined. |
-| dbox        | 2017-11-05 | PR#148 | ONNX: Versioning mechanism and policy undefined for operators - review and ACK|comment|counter Edward's proposal.|
 | edward      | 2017-11-05 | Active | ONNX: Versioning impact of transitive dependencies undefined. |
-| dbox        | 2017-11-10 | Active | ONNX: Rules for how type and shape inferencing are undefined. |
 | stuart      | 2017-11-05 | Active | Operator inventory list needs to be defined. |
 | stuart      | 2017-11-05 | Active | Operator signatures and semantics needs to be defined. |
  
-
-
