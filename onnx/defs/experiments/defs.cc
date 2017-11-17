@@ -226,28 +226,12 @@ will throw errors.
         "2D blob of size (KxN) containing fully connected weight "
         "matrix",
         "T")
-    .Input(2, "b", "1D blob containing bias vector", "T")
+    .Input(2, "B", "1D blob containing bias vector", "T")
     .Output(0, "Y", "2D output tensor", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-
-OPERATOR_SCHEMA(LpNormalization)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
-    .Input(0, "input", "Input matrix", "T")
-    .Output(0, "output", "Matrix after normalization", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
-    .SetDoc(R"DOC(
-Given a matrix, apply Lp-normalization along the provided axis.
-)DOC")
-    .Attr("axis", "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.", AttrType::INT)
-    .Attr("p", "(float, default 2.0) the order of the normalization, only 2.0 is supported.", AttrType::FLOAT);
 
 OPERATOR_SCHEMA(Scale)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
@@ -311,7 +295,6 @@ Experimental allowing ATen operations to be accessed directly from Caffe2
 to allow for quick prototyping when ONNX is missing standard versions of
 and op)DOC");
 
-
 OPERATOR_SCHEMA(ImageScaler)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
@@ -342,7 +325,7 @@ OPERATOR_SCHEMA(MeanVarianceNormalization)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    
+
 OPERATOR_SCHEMA(Crop)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
@@ -380,3 +363,39 @@ OPERATOR_SCHEMA(Embedding)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain output types to float tensors.");
+
+OPERATOR_SCHEMA(ResizeNearest)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Attr(
+        "width_scale",
+        "The scale along width dimension",
+        AttrType::FLOAT, true)
+    .Attr(
+        "height_scale",
+        "The scale along height dimension",
+        AttrType::FLOAT, true)
+    .Input(
+        0,
+        "X",
+        "4-D tensor, [N,C,H,W]", "T")
+    .Output(
+        0,
+        "Y",
+        "4-D tensor after resizing, [N,C,H,W]", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(bool)", "tensor(int32)", "tensor(int64)",
+        "tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain output types to bool, int32, int64, float16, float, double tensors.")
+    .SetDoc(R"DOC(
+Resize the width and height dimensions:
+output_width = floor(input_width * width_scale),
+output_height = floor(input_height * height_scale).
+For example:
+X = [[[[1, 2],[3, 4]]]],
+width_scale = 2,
+height_scale = 2,
+Y = [[[[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]]]]
+)DOC");

@@ -1,5 +1,7 @@
-Open Neural Network Exchange (ONNX)
-========
+
+
+<p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
+
 [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx)
 [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98?svg=true)](https://ci.appveyor.com/project/onnx/onnx)
 
@@ -13,6 +15,18 @@ frameworks and streamlining the path from research to production will increase t
 the AI community. We are an early stage and we invite the community to submit feedback and help us further 
 evolve ONNX.
 
+# Use ONNX
+Start experimenting today.
+Check out our [Getting Started Guide](http://onnx.ai/getting-started), [Supported Tools](http://onnx.ai/supported-tools), and [Tutorials](https://github.com/onnx/tutorials).
+
+# Contribute
+ONNX is a community project.  We encourage you to join the effort and contribute feedback, ideas, and code. Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.
+
+# Follow Us
+Stay up to date with the latest ONNX news. [Facebook](https://www.facebook.com/onnxai/) [Twitter](https://twitter.com/onnxai)
+
+
+
 
 # Folder Structure
 
@@ -21,6 +35,8 @@ evolve ONNX.
   - checker.py: utility to check whether a serialized ONNX proto is legal.
   - defs/: subfolder that defines the ONNX operators.
   - test/: test files
+  
+
 
 # Installation
 

@@ -69,10 +69,10 @@ OPERATOR_SCHEMA(Concat)
         "Constrain output types to float tensors.");
 
 OPERATOR_SCHEMA(Split)
-    .NumInputs(1, 2)
+    .SinceVersion(2)
+    .NumInputs(1)
     .NumOutputs(1, INT_MAX)
     .Input(0, "input", "The tensor to split", "T")
-    .Input(1, "split", "Optional list of output lengths (see also arg 'split')", "T")
     .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.")
@@ -169,21 +169,21 @@ OPERATOR_SCHEMA(Gather)
     .NumInputs(2)
     .NumOutputs(1)
     .SetDoc(R"DOC(
-Given DATA tensor of rank r >= 1, and INDICES tensor of rank q, gather
-entries of the outer-most dimension of DATA indexed by INDICES, and concatenate
+Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
+entries of the outer-most dimension of `data` indexed by `indices`, and concatenate
 them in an output tensor of rank q + (r - 1).
 
 Example:
-  DATA  = [
+  data  = [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
   ]
-  INDICES = [
+  indices = [
       [0, 1],
       [1, 2],
   ]
-  OUTPUT = [
+  output = [
       [
           [1.0, 1.2],
           [2.3, 3.4],
@@ -194,9 +194,9 @@ Example:
       ],
   ]
 )DOC")
-    .Input(0, "DATA", "Tensor of rank r >= 1.", "T")
-    .Input(1, "INDICES", "Tensor of int32/int64 indices, of any rank q.", "T")
-    .Output(0, "OUTPUT", "Tensor of rank q + (r - 1).", "T")
+    .Input(0, "data", "Tensor of rank r >= 1.", "T")
+    .Input(1, "indices", "Tensor of int32/int64 indices, of any rank q.", "T")
+    .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
 
@@ -220,10 +220,12 @@ OPERATOR_SCHEMA(Pad)
     .NumInputs(1)
     .NumOutputs(1)
     .Attr("paddings",
-          "List of integers indicate the padding sizes, paddings's length"
-          " should be the double of input's dimension. "
-          "The order should be axis_0_begin, axis_0_end, axis_1_begin, ...,"
-          " axis_n_begin, axis_n_end, n is input's dimension.",
+          "List of integers indicate the padding element count at the "
+          "begining and end of each axis, for 2D it is the number of pixel. "
+          "`paddings` rank should be double of the input's rank. `paddings` format should be as follow "
+          "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+          "added at the begining of axis `i` and xi_end, the number of pixels added at "
+          "the end of axis `i`.",
           AttrType::INTS,
           true)
     .Attr("mode",
@@ -233,19 +235,19 @@ OPERATOR_SCHEMA(Pad)
           "One float, indicates the value to be filled, default is 0",
           AttrType::FLOAT)
     .SetDoc(R"DOC(
-Given DATA tensor, paddings, mode, and value.
+Given `data` tensor, paddings, mode, and value.
 
 Example:
   Insert 0 paddings to the beginning of the second dimension.
 
-  DATA  = [
+  data = [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
   ]
   paddings = [0, 0, 2, 0]
 
-  OUTPUT = [
+  output = [
       [
           [0.0, 0.0, 1.0, 1.2],
           [0.0, 0.0, 2.3, 3.4],
@@ -253,8 +255,8 @@ Example:
       ],
   ]
 )DOC")
-    .Input(0, "DATA", "Input tensor.", "T")
-    .Output(0, "OUTPUT", "Tensor after padding.", "T")
+    .Input(0, "data", "Input tensor.", "T")
+    .Output(0, "output", "Tensor after padding.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
 
@@ -317,4 +319,4 @@ OPERATOR_SCHEMA(Tile)
             "Output tensor of same shape and type as input.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.");
-        
+
