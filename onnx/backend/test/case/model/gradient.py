@@ -87,5 +87,5 @@ class Gradient(Base):
                                                    onnx.TensorProto.FLOAT, [])])
 
         model = onnx.helper.make_model(graph, producer_name='backend-test')
-        expect(model, inputs=[a, b], outputs=[c, dd_da, dd_db],
+        expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
                name='test_gradient_of_add_and_mul')
