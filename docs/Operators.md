@@ -80,6 +80,7 @@
   * <a href="#MaxRoiPool">MaxRoiPool</a>
   * <a href="#MaxUnpool">MaxUnpool</a>
   * <a href="#Mean">Mean</a>
+  * <a href="#MeanSquaredError">MeanSquaredError</a>
   * <a href="#Min">Min</a>
   * <a href="#Mod">Mod</a>
   * <a href="#Momentum">Momentum</a>
@@ -139,6 +140,7 @@
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
+  * <a href="#SoftmaxCrossEntropy">SoftmaxCrossEntropy</a>
   * <a href="#Softplus">Softplus</a>
   * <a href="#Softsign">Softsign</a>
   * <a href="#SpaceToDepth">SpaceToDepth</a>
@@ -9149,6 +9151,64 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
+### <a name="MeanSquaredError"></a><a name="meansquarederror">**MeanSquaredError**</a>
+
+  Loss function that measures the
+  mean squared error (squared L2 norm) between each element in the 'scores'
+  and 'labels'.
+  
+  The loss can be described as:
+      L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
+  , where N is the batch size.
+  
+  If 'weights' is provided, it should be broadcastable to shape of 'scores'.
+      L = Mul(weights, L)
+  , where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
+  
+  Finally, L is reduced:
+  L = ReduceSum(L), if reduction = 'sum';
+      ReduceMean(L), if reduction = 'mean';
+      ReduceMean(L, axes=[0]), if reduction = 'none';
+  
+  .
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>reduction</tt> : string (default is mean)</dt>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed. 'mean': the sum of the output will be divided by the batch_size.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>scores</tt> : T</dt>
+<dd>The predicted outputs.</dd>
+<dt><tt>labels</tt> : T</dt>
+<dd>The ground truth output tensor, same dimensions as 'scores'.</dd>
+<dt><tt>weights</tt> (optional) : T</dt>
+<dd>Weights acts as a coefficient for the loss, it should be broadcastable to shape of 'scores'.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Weighted loss float Tensor. If reduction is none, this has the shape of [batch_size]; otherwise, it is scalar.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
@@ -17185,6 +17245,63 @@ expect(node, inputs=[x], outputs=[y],
 ```
 
 </details>
+
+
+### <a name="SoftmaxCrossEntropy"></a><a name="softmaxcrossentropy">**SoftmaxCrossEntropy**</a>
+
+  Loss function that measures the softmax cross entropy
+  between 'scores' and 'labels'.
+  
+  The loss can be described as:
+      L = (l_1, l_2, ..., l_N), where N is the batch_size
+  
+  The loss for one sample, l_n, can caculated as follows
+      let p = Softmax(scores)
+      l_n = -sum(label_i * log(p_i)), where i is the index of classes.
+  or
+      l_n = -sum(weight_i * label_i * log(p_i)), if 'weights' is provided.
+  
+  Finally, L is reduced:
+  L = ReduceSum(L), if reduction = 'sum';
+      ReduceMean(L), if reduction = 'mean';
+      L, if reduction = 'none'
+  
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt> </tt> : string (default is mean)</dt>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed. 'mean': the sum of the output will be divided by the batch_size.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>scores</tt> : T</dt>
+<dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, d1, d2 , ..., dk], where K is the number of dimensions.</dd>
+<dt><tt>labels</tt> : T</dt>
+<dd>The ground truth output tensor, same dimensions as 'scores'. Usualy, it's a one-hot representation of groud-truth class.</dd>
+<dt><tt>weights</tt> (optional) : T</dt>
+<dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Weighted loss float Tensor. If reduction is 'none', this has the shape of [batch_size], or [batch_size, d1, d2, ..., dk] in case of K-dimensional loss. Otherwise, it is a scalar.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
 
 
 ### <a name="Softplus"></a><a name="softplus">**Softplus**</a>
