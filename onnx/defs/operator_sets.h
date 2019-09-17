@@ -626,16 +626,17 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, SequenceErase);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, SequenceLength);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, SplitToSequence);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ConcatFromSequence);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Pad);
 
 // Iterate over schema from ai.onnx version 11
 class OpSet_Onnx_ver11 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Loop)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, BitShift)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Unique)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, CumSum)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Round)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, BitShift)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, TopK)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 11, DepthToSpace)>());
@@ -687,6 +688,7 @@ class OpSet_Onnx_ver11 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, SequenceLength)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, SplitToSequence)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ConcatFromSequence)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Pad)>());
   }
 };
 
