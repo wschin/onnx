@@ -362,54 +362,55 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Adagrad"></a><a name="adagrad">**Adagrad**</a>
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
-      algorithm. This operator can conduct the optimization of multiple tensor variables.
+  algorithm. This operator can conduct the optimization of multiple tensor variables.
+  Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
+  some parameters:
+   
+   - The initial learning-rate "R".
+   - The update count "T". That is, the number of training iterations conducted.
+   - A L2-norm regularization coefficient "norm_coefficient".
+   - A learning-rate decay factor "decay_factor".
+   - A small constant "epsilon" to avoid dividing-by-zero. 
   
-      Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
-      some parameters:
-       
-       - The initial learning-rate "R".
-       - The update count "T". That is, the number of training iterations conducted.
-       - A L2-norm regularization coefficient "norm_coefficient".
-       - A learning-rate decay factor "decay_factor".
-       - A small constant "epsilon" to avoid dividing-by-zero. 
+  At each ADAGRAD iteration, the optimized tensors are moved along a direction
+  computed based on their estimated gradient and accumulated squared gradient. Assume
+  that only a single tensor "X" is updated by this operator. We need the value of "X",
+  its gradient "G", and its accumulated squared gradient "H". Therefore, variables in
+  this operator's input list are sequentially "R", "T", "X", "G", and "H". Other
+  parameters are given as attributes because they are usually constants. Also, the
+  corresponding output tensors are the new value of "X" (called "X_new"), and then
+  the new accumulated squared gradient (called "H_new"). Those outputs are computed
+  from the given inputs following the pseudo code below.
   
-      At each ADAGRAD iteration, the optimized tensors are moved along a direction
-      computed based on their estimated gradient and accumulated squared gradient. Assume
-      that only a single tensor "X" is updated by this operator. We need the value of "X",
-      its gradient "G", and its accumulated squared gradient "H". Therefore, variables in
-      this operator's input list are sequentially "R", "T", "X", "G", and "H". Other
-      parameters are given as attributes because they are usually constants. Also, the
-      corresponding output tensors are the new value of "X" (called "X_new"), and then
-      the new accumulated squared gradient (called "H_new"). Those outputs are computed
-      from the given inputs following the pseudo code below.
+  Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
+  numpy-style broadcasting support. The pseudo code to compute those outputs is:
   
-      Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
-      numpy-style broadcasting support. The pseudo code to compute those outputs is:
+  ```
+  // Compute a scalar learning-rate factor. If X is never updated, T should be 0.
+  r = R / (1 + T * decay_factor);
   
-        // Compute a scalar learning-rate factor. If X is never updated, T should be 0.
-        r = R / (1 + T * decay_factor);
+  // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+  G_regularized = norm_coefficient * X + G;
   
-        // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
-        G_regularized = norm_coefficient * X + G;
+  // Compute new accumulated squared gradient.
+  H_new = H + G_regularized * G_regularized;
   
-        // Compute new accumulated squared gradient.
-        H_new = H + G_regularized * G_regularized;
+  // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
+  // compute square root element-wisely.
+  H_adaptive = Sqrt(H_new) + epsilon
   
-        // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
-        // compute square root element-wisely.
-        H_adaptive = Sqrt(H_new) + epsilon
+  // Compute the new value of "X".
+  X_new = X - r * G_regularized / H_adaptive;
+  ```
   
-        // Compute the new value of "X".
-        X_new = X - r * G_regularized / H_adaptive;
+  If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2", the same
+  pseudo code may be extended to handle all tensors jointly. More specifically, we can view "X" as a
+  concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
+  be concatenated too) and then just reuse the entire pseudo code.
   
-      If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2", the same
-      pseudo code may be extended to handle all tensors jointly. More specifically, we can view "X" as a
-      concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
-      be concatenated too) and then just reuse the entire pseudo code.
-  
-      Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
-      In that reference paper, this operator is a spacial case of the Figure 1's composite mirror
-      descent update.
+  Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
+  In that reference paper, this operator is a spacial case of the Figure 1's composite mirror
+  descent update.
 
 #### Version
 
@@ -543,63 +544,64 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
 ### <a name="Adam"></a><a name="adam">**Adam**</a>
 
   Compute one iteration of Adam, a stochastic gradient based optimization
-      algorithm. This operator can conduct the optimization of multiple tensor variables.
+  algorithm. This operator can conduct the optimization of multiple tensor variables.
+  Let's define the behavior of this operator. First of all, Adam requires
+  some parameters:
+   
+   - The learning-rate "R".
+   - The update count "T". That is, the number of training iterations conducted.
+   - A L2-norm regularization coefficient "norm_coefficient".
+   - A small constant "epsilon" to avoid dividing-by-zero. 
+   - Two coefficients, "alpha" and "beta".
   
-      Let's define the behavior of this operator. First of all, Adam requires
-      some parameters:
-       
-       - The learning-rate "R".
-       - The update count "T". That is, the number of training iterations conducted.
-       - A L2-norm regularization coefficient "norm_coefficient".
-       - A small constant "epsilon" to avoid dividing-by-zero. 
-       - Two coefficients, "alpha" and "beta".
+  At each Adam iteration, the optimized tensors are moved along a direction
+  computed based on their exponentially-averaged historical gradient and
+  exponentially-averaged historical squared gradient. Assume that only a tensor
+  "X" is being optimized. The rest of required information is
   
-      At each Adam iteration, the optimized tensors are moved along a direction
-      computed based on their exponentially-averaged historical gradient and
-      exponentially-averaged historical squared gradient. Assume that only a tensor
-      "X" is being optimized. The rest of required information is
-      
-       - the value of "X",
-       - "X"'s gradient (denoted by "G"),
-       - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
-       - "X"'s exponentially-averaged historical squared gradient (denoted by "H").
+   - the value of "X",
+   - "X"'s gradient (denoted by "G"),
+   - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
+   - "X"'s exponentially-averaged historical squared gradient (denoted by "H").
   
-      Some of those parameters are passed into this operator as input tensors and others
-      are stored as this operator's attributes. Specifically, this operator's input tensor
-      list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
-      the second input, and so on. Other parameters are given as attributes because they
-      are constants. Moreover, the corresponding output tensors are 
-      
-       - the new value of "X" (called "X_new"),
-       - the new exponentially-averaged historical gradient (denoted by "V_new"), and
-       - the new exponentially-averaged historical squared gradient (denoted by "H_new").
+  Some of those parameters are passed into this operator as input tensors and others
+  are stored as this operator's attributes. Specifically, this operator's input tensor
+  list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
+  the second input, and so on. Other parameters are given as attributes because they
+  are constants. Moreover, the corresponding output tensors are 
   
-      Those outputs are computed following the pseudo code below.
+   - the new value of "X" (called "X_new"),
+   - the new exponentially-averaged historical gradient (denoted by "V_new"), and
+   - the new exponentially-averaged historical squared gradient (denoted by "H_new").
   
-      Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
-      numpy-style broadcasting support. The pseudo code to compute those outputs is:
+  Those outputs are computed following the pseudo code below.
   
-        // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
-        G_regularized = norm_coefficient * X + G;
+  Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
+  numpy-style broadcasting support. The pseudo code to compute those outputs is:
   
-        // Update exponentially-averaged historical gradient.
-        V_new = alpha * V + (1 - alpha) * G_regularized;
+  ```
+  // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+  G_regularized = norm_coefficient * X + G;
   
-        // Update exponentially-averaged historical squared gradient.
-        H_new = beta * H + (1 - beta) * G_regularized * G_regularized;
+  // Update exponentially-averaged historical gradient.
+  V_new = alpha * V + (1 - alpha) * G_regularized;
   
-        // Compute the element-wise square root of H_new. V_new will be element-wisely
-        // divided by H_sqrt for a better update direction.
-        H_sqrt = Sqrt(H_new) + epsilon;
+  // Update exponentially-averaged historical squared gradient.
+  H_new = beta * H + (1 - beta) * G_regularized * G_regularized;
   
-        // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
-        R_adjusted = R * Sqrt(1 - beta**T) / (1 - alpha**T);
+  // Compute the element-wise square root of H_new. V_new will be element-wisely
+  // divided by H_sqrt for a better update direction.
+  H_sqrt = Sqrt(H_new) + epsilon;
   
-        // Compute new value of "X".
-        X_new = X - R_adjusted * V_new / H_sqrt
+  // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
+  R_adjusted = R * Sqrt(1 - beta**T) / (1 - alpha**T);
   
-      If there are multiple inputs to be optimized, the pseudo code will be applied
-      independently to each of them.
+  // Compute new value of "X".
+  X_new = X - R_adjusted * V_new / H_sqrt
+  ```
+  
+  If there are multiple inputs to be optimized, the pseudo code will be applied
+  independently to each of them.
 
 #### Version
 
@@ -9690,65 +9692,69 @@ expect(node, inputs=[x, y], outputs=[z],
 ### <a name="Momentum"></a><a name="momentum">**Momentum**</a>
 
   Compute one iteration of stochastic gradient update with momentum.
-      This operator can conduct the optimization of multiple tensor variables.
+  This operator can conduct the optimization of multiple tensor variables.
   
-      Let's define the behavior of this operator. As you can imagine, SG with momentum requires
-      several parameters:
-       
-       - The learning-rate "R".
-       - The update count "T". That is, the number of conducted training iterations. It should
-         be zero in the first training iteration.
-       - A L2-norm regularization coefficient "norm_coefficient".
-       - A decay coefficient of previous accumulated gradient (i.e., momentum) "alpha".
-       - The scaling coefficient of current gradient "beta".
-       - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
-         be used.
+  Let's define the behavior of this operator. As you can imagine, SG with momentum requires
+  several parameters:
+   
+   - The learning-rate "R".
+   - The update count "T". That is, the number of conducted training iterations. It should
+     be zero in the first training iteration.
+   - A L2-norm regularization coefficient "norm_coefficient".
+   - A decay coefficient of previous accumulated gradient (i.e., momentum) "alpha".
+   - The scaling coefficient of current gradient "beta".
+   - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
+     be used.
   
-      For the sake of simplicity, assume that there is only one tensor (called "X") to be optimized.
-      Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
-      Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
-      momentum (called "V_new").
-      
-      This operator supports two different momentum algorithms. Set the attribute "mode" to
-      "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
-      "standard" to use standard momentum. Computation details are described subsequently.
+  For the sake of simplicity, assume that there is only one tensor (called "X") to be optimized.
+  Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
+  Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
+  momentum (called "V_new").
   
-      Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
+  This operator supports two different momentum algorithms. Set the attribute "mode" to
+  "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
+  "standard" to use standard momentum. Computation details are described subsequently.
   
-      Pseudo code for SG with standard momentum:
+  Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
   
-        // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
-        // values of all elements in X.
-        G_regularized = norm_coefficient * X + G
+  Pseudo code for SG with standard momentum:
   
-        // In the first training iteration, beta should always be 1.
-        beta_adjusted = T > 0 ? beta : 1
+  ```
+  // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
+  // values of all elements in X.
+  G_regularized = norm_coefficient * X + G
   
-        // Compute the current momentum based on previous momentum and the current gradient.
-        V_new = alpha * V + beta_adjusted * G_regularized
+  // In the first training iteration, beta should always be 1.
+  beta_adjusted = T > 0 ? beta : 1
   
-        // Update X.
-        X_new = X - R * V_new
+  // Compute the current momentum based on previous momentum and the current gradient.
+  V_new = alpha * V + beta_adjusted * G_regularized
   
-      Pseudo code for SG with Nesterov's momentum:
+  // Update X.
+  X_new = X - R * V_new
+  ```
   
-        // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
-        // values of all elements in X.
-        G_regularized = norm_coefficient * X + G;
+  Pseudo code for SG with Nesterov's momentum:
   
-        // In the first training iteration, beta should always be 1.
-        beta_adjusted = T > 0 ? beta : 1
+  ```
+  // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
+  // values of all elements in X.
+  G_regularized = norm_coefficient * X + G;
   
-        // Compute the current momentum based on previous momentum and the current gradient.
-        V_new = alpha * V + beta_adjusted * G_regularized;
+  // In the first training iteration, beta should always be 1.
+  beta_adjusted = T > 0 ? beta : 1
   
-        // Compute final update direction and then update X.
-        X_new = X - R * (G_regularized + alpha * V_new)
+  // Compute the current momentum based on previous momentum and the current gradient.
+  V_new = alpha * V + beta_adjusted * G_regularized;
   
-      If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
-      pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
-      concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
-      be concatenated too) and then our pseudo code becomes applicable.
+  // Compute final update direction and then update X.
+  X_new = X - R * (G_regularized + alpha * V_new)
+  ```
+  
+  If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
+  pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
+  concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
+  be concatenated too) and then our pseudo code becomes applicable.
 
 #### Version
 
