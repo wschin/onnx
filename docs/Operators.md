@@ -413,7 +413,7 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
 #### Attributes
 
@@ -603,7 +603,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
 #### Attributes
 
@@ -9174,7 +9174,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
 #### Attributes
 
@@ -9752,7 +9752,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
 #### Attributes
 
@@ -17269,7 +17269,7 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
 #### Attributes
 

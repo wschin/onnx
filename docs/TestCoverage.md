@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 140/155 (90.32%, 5 generators excluded) common operators.
+Node tests have covered 140/157 (89.17%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -10841,6 +10841,9 @@ expect(node, inputs=[x, y], outputs=[z],
 ### MaxRoiPool (call for test cases)
 
 
+### MeanSquaredError (call for test cases)
+
+
 ### Multinomial (random generator operator)
 
 
@@ -10872,6 +10875,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### SequenceLength (call for test cases)
+
+
+### SoftmaxCrossEntropy (call for test cases)
 
 
 ### SpaceToDepth (call for test cases)
