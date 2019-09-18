@@ -1503,9 +1503,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>, <a href="Changelog.md#AveragePool-7">AveragePool-7</a>
+Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>, <a href="Changelog.md#AveragePool-7">AveragePool-7</a>, <a href="Changelog.md#AveragePool-10">AveragePool-10</a>
 
 #### Attributes
 
@@ -1521,7 +1521,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each spatial axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -3046,7 +3046,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Conv-1">Conv-1</a>
 
 #### Attributes
 
@@ -3054,7 +3056,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each spatial axis of the filter.</dd>
+<dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults is 1 along each spatial axis.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
 <dd>number of groups input channels and output channels are divided into.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
@@ -3062,7 +3064,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each spatial axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults is 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -3323,7 +3325,9 @@ expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_wi
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">ConvTranspose-1</a>
 
 #### Attributes
 
@@ -3331,7 +3335,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each spatial axis of the filter.</dd>
+<dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
 <dd>number of groups input channels and output channels are divided into.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
@@ -3343,7 +3347,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each spatial axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -6011,46 +6015,208 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a hr
 #### Examples
 
 <details>
-<summary>notranspose</summary>
+<summary>all_attributes</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Gemm',
     inputs=['a', 'b', 'c'],
     outputs=['y'],
-    alpha=0.5,
-    beta=0.5
+    alpha=0.25,
+    beta=0.35,
+    transA=1,
+    transB=1
 )
-a = np.random.ranf([3, 6]).astype(np.float32)
-b = np.random.ranf([6, 4]).astype(np.float32)
-c = np.random.ranf([3, 4]).astype(np.float32)
-y = 0.5 * np.dot(a, b) + 0.5 * c
+a = np.random.ranf([4, 3]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.random.ranf([1, 5]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, transA=1, transB=1, alpha=0.25, beta=0.35)
 expect(node, inputs=[a, b, c], outputs=[y],
-       name='test_gemm_nobroadcast')
+       name='test_gemm_all_attributes')
 ```
 
 </details>
 
 
 <details>
-<summary>transpose</summary>
+<summary>alpha</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Gemm',
     inputs=['a', 'b', 'c'],
     outputs=['y'],
-    alpha=0.5,
-    beta=0.5,
-    transA=1,
-    transB=1
+    alpha=0.5
+)
+a = np.random.ranf([3, 5]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, alpha=0.5)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_alpha')
+```
+
+</details>
+
+
+<details>
+<summary>beta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    beta=0.5
+)
+a = np.random.ranf([2, 7]).astype(np.float32)
+b = np.random.ranf([7, 4]).astype(np.float32)
+c = np.random.ranf([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, beta=0.5)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_beta')
+```
+
+</details>
+
+
+<details>
+<summary>default_matrix_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 6]).astype(np.float32)
+b = np.random.ranf([6, 4]).astype(np.float32)
+c = np.random.ranf([3, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_matrix_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_scalar_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 3]).astype(np.float32)
+b = np.random.ranf([3, 4]).astype(np.float32)
+c = np.array(3.14)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_scalar_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_single_elem_vector_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 7]).astype(np.float32)
+b = np.random.ranf([7, 3]).astype(np.float32)
+c = np.random.ranf([1]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_single_elem_vector_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_vector_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 7]).astype(np.float32)
+b = np.random.ranf([7, 4]).astype(np.float32)
+c = np.random.ranf([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_vector_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_zero_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 5]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_zero_bias')
+```
+
+</details>
+
+
+<details>
+<summary>transposeA</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    transA=1
 )
 a = np.random.ranf([6, 3]).astype(np.float32)
-b = np.random.ranf([4, 6]).astype(np.float32)
-c = np.random.ranf([1, 1]).astype(np.float32)
-y = 0.5 * np.dot(a.T, b.T) + 0.5 * c
+b = np.random.ranf([6, 4]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, transA=1)
 expect(node, inputs=[a, b, c], outputs=[y],
-       name='test_gemm_broadcast')
+       name='test_gemm_transposeA')
+```
+
+</details>
+
+
+<details>
+<summary>transposeB</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    transB=1
+)
+a = np.random.ranf([3, 6]).astype(np.float32)
+b = np.random.ranf([4, 6]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, transB=1)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_transposeB')
 ```
 
 </details>
@@ -8113,9 +8279,9 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
+Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>, <a href="Changelog.md#LpPool-2">LpPool-2</a>
 
 #### Attributes
 
@@ -8129,7 +8295,7 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each spatial axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -8408,9 +8574,9 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>, <a href="Changelog.md#MaxPool-8">MaxPool-8</a>
+Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>, <a href="Changelog.md#MaxPool-8">MaxPool-8</a>, <a href="Changelog.md#MaxPool-10">MaxPool-10</a>
 
 #### Attributes
 
@@ -8420,7 +8586,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>,
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
 <dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>Dilation value along each spatial axis of filter.</dd>
+<dd>Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -8428,7 +8594,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>,
 <dt><tt>storage_order</tt> : int (default is 0)</dt>
 <dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each spatial axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -8985,7 +9151,9 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">MaxUnpool-9</a>
 
 #### Attributes
 
@@ -8995,7 +9163,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each spatial axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
