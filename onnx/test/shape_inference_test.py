@@ -1016,6 +1016,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
 
+    def test_gemm_no_bias(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (13, 7)),
+             ('y', TensorProto.FLOAT, (7, 17))],
+            [make_node('Gemm', ['x', 'y'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (13, 17))])
+
     def test_reduce_op_shape_2_axis(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (24, 4, 11))],
@@ -1127,12 +1135,54 @@ class TestShapeInference(unittest.TestCase):
                                       make_tensor_value_info('a', TensorProto.FLOAT, (5, 3, 7)),
                                       make_tensor_value_info('b', TensorProto.FLOAT, (5, 3, 7))])
 
-    def test_softmax(self):  # type: () -> None
+    def test_softmax_2d(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (4, 5))],
             [make_node('Softmax', ['x'], 'z')],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5))])
+
+    def test_softmax_3d(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6))],
+            [make_node('Softmax', ['x'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5, 6))])
+
+    def test_hardmax_2d(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5))],
+            [make_node('Hardmax', ['x'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5))])
+
+    def test_hardmax_3d(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6))],
+            [make_node('Hardmax', ['x'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5, 6))])
+
+    def test_logsoftmax_2d(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5))],
+            [make_node('LogSoftmax', ['x'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5))])
+
+    def test_logsoftmax_3d(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6))],
+            [make_node('LogSoftmax', ['x'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5, 6))])
+
+    def test_logsoftmax_3d_negative_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6))],
+            [make_node('LogSoftmax', ['x'], 'z', axis=-1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5, 6))])
 
     def test_maxpool(self):  # type: () -> None
         graph = self._make_graph(
@@ -1585,6 +1635,41 @@ class TestShapeInference(unittest.TestCase):
              make_tensor_value_info('scan_output', TensorProto.FLOAT, (axis_0_len, seq_len, input_size))],
             opset_imports=[helper.make_opsetid("", 9)])
 
+    def test_if_ver1(self):  # type: () -> None
+
+        # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
+        # subtracts.
+        # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
+        # this breaks the subgraph inferencing as it expects the subgraphs to have zero inputs
+        then_subgraph = helper.make_graph(
+            [make_node('Add', ['current_value', 'add_value'], ['then_output'])],
+            "then_subgraph",
+            [],  # no inputs
+            [make_tensor_value_info('then_output', TensorProto.UNDEFINED, None)],
+        )
+
+        else_subgraph = helper.make_graph(
+            [make_node('Sub', ['current_value', 'sub_value'], ['else_output'])],
+            "else_subgraph",
+            [],  # no inputs
+            [make_tensor_value_info('else_output', TensorProto.UNDEFINED, None)],
+        )
+
+        graph = self._make_graph(
+            [('cond', TensorProto.BOOL, (1,)),
+             ('current_value', TensorProto.FLOAT, (1,)),
+             ('add_value', TensorProto.FLOAT, (1,)),
+             ('sub_value', TensorProto.FLOAT, (1,))],
+            [make_node('If', ['cond'], ['if_output'],
+                       then_branch=then_subgraph, else_branch=else_subgraph)],
+            []
+        )
+
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('if_output', TensorProto.FLOAT, (1,))],
+            opset_imports=[make_opsetid("", 10)])
+
     def test_if(self):  # type: () -> None
 
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
@@ -1616,6 +1701,38 @@ class TestShapeInference(unittest.TestCase):
         )
 
         self._assert_inferred(graph, [make_tensor_value_info('if_output', TensorProto.FLOAT, (1,))])
+
+    def test_if_with_different_shapes_in_then_else_branches(self):  # type: () -> None
+
+        # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
+        # subtracts.
+        # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
+        # this breaks the subgraph inferencing as it expects the subgraphs to have zero inputs
+        then_subgraph = helper.make_graph(
+            [make_node('Add', ['current_value', 'add_value'], ['then_output'])],
+            "then_subgraph",
+            [],  # no inputs
+            [make_tensor_value_info('then_output', TensorProto.UNDEFINED, (1,))],
+        )
+
+        else_subgraph = helper.make_graph(
+            [make_node('Sub', ['current_value', 'sub_value'], ['else_output'])],
+            "else_subgraph",
+            [],  # no inputs
+            [make_tensor_value_info('else_output', TensorProto.UNDEFINED, (5,))],
+        )
+
+        graph = self._make_graph(
+            [('cond', TensorProto.BOOL, (1,)),
+             ('current_value', TensorProto.FLOAT, (1,)),
+             ('add_value', TensorProto.FLOAT, (1,)),
+             ('sub_value', TensorProto.FLOAT, (5,))],
+            [make_node('If', ['cond'], ['if_output'],
+                       then_branch=then_subgraph, else_branch=else_subgraph)],
+            []
+        )
+
+        self._assert_inferred(graph, [make_tensor_value_info('if_output', TensorProto.FLOAT, (None,))])  # type: ignore
 
     def test_maxunpool_shape_without_output_shape(self):  # type: () -> None
         graph = self._make_graph(
