@@ -326,7 +326,7 @@ setuptools.setup(
     extras_require=extras_require,
     author='bddppq',
     author_email='jbai@fb.com',
-    url='https://github.com/onnx/onnx',
+    url='https://github.com/wschin/onnx',
     entry_points={
         'console_scripts': [
             'check-model = onnx.bin.checker:check_model',
