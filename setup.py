@@ -313,7 +313,7 @@ if sys.version_info[0] == 3:
 ################################################################################
 
 setuptools.setup(
-    name="onnx",
+    name="onnx-wschin",
     version=VersionInfo.version,
     description="Open Neural Network Exchange",
     ext_modules=ext_modules,
