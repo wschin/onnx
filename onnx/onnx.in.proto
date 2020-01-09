@@ -312,6 +312,13 @@ message TrainingInfoProto {
   // only be assigned up to once; it implies that the values in "update_binding"
   // must be unique.
   repeated StringStringEntryProto update_binding = 7;
+
+  // A graph that describes how to compute the initial tensors upon starting
+  // the training process. Each initializer graph has zero inputs and one
+  // output, which acts as the initialized tensor. The initialization graph
+  // outputs will have exactly the same names as the "initializer" tensors in
+  // the inference graph.
+  GraphProto model_initializer = 8;
 }
 
 // Models
