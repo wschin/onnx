@@ -244,10 +244,14 @@ message FunctionProto {
 // Training information
 // TrainingInfoProto is a computation graph similar to the inference one (i.e.,
 // ModelProto.graph) but represents a full or a part of the training algorithm.
-// Instead of reusing GraphProto to store the training algorithm,
-// TrainingInfoProto is introduced to avoid assignments in iterative training
-// procedures. If the targeted training algorithm contains multiple assignment
-// stages, the user needs to create a TrainingInfoProto for every stage.
+// Each execution of a TrainingInfoProto leads to the update of some
+// initializers in the executed TrainingInfoProto or
+// ModelProto.graph.initializer. If there are multiple TrainingInfoProto's,
+// sequentially executing all of them once consistutes a full training
+// algorithm. The initializer update happens at the end of each
+// TrainingInfoProto's execution. If the targeted training algorithm contains
+// consecutive update stages (such as block coordinate descent methods), the
+// user needs to create a TrainingInfoProto for each stage.
 //
 // TrainingInfoProto contains three major components.
 //
@@ -275,13 +279,16 @@ message TrainingInfoProto {
   // The values can only be inputs of "algorithm" defined below.
   repeated TensorProto initializer = 1;
 
-  // Training inputs, for example, labels in classification problems.
-  // Those values can only be inputs of "algorithm" defined below.
+  // Training inputs include both of inference inputs and training-specific
+  // inputs. This "input" field can have, for example, some feature vectors 
+  // and the expected classification labels. Those values are visible only to
+  // the nodes defined in "algorithm" below.
   repeated ValueInfoProto input = 2;
 
-  // Training outputs, for example, new tensor values computed by the
-  // specified training algorithm. Those values can only be selected outputs of
-  // "algorithms".
+  // Training outputs include both of inference inputs and training-specific
+  // outputs. For example, new initializer values computed by the
+  // specified training algorithm. Only the outputs of "algorithm" nodes can
+  // be specified in "output."
   repeated ValueInfoProto output = 3;
 
   // The training algorithm. Given required inputs, it computes outputs which
@@ -291,7 +298,7 @@ message TrainingInfoProto {
   // the field "ModelProto.function".
   //
   // The field MUST be present.
-  optional FunctionProto algorithm = 4;
+  optional GraphProto algorithm = 4;
 
   // Gradient-based training is usually an iterative procedure. In one gradient
   // descent iteration, we apply
@@ -301,7 +308,7 @@ message TrainingInfoProto {
   // where "x" is the optimized tensor, "r" stands for learning rate, and "g" is
   // gradient of "x" with respect to a chosen loss. To avoid adding assignments
   // into the training graph (ONNX does not have assignment operator yet), the
-  // user need to save "y = x - r * g" into a TrainingProto. To tell runtime
+  // user need to save "y = x - r * g" into a TrainingInfoProto. To tell runtime
   // that "y" should be assigned to "x", the field "update_binding" should
   // contain a pair of strings, "y" (key of StringStringEntryProto) and "x"
   // (value of StringStringEntryProto). Similarly, for a neural network which
@@ -313,12 +320,12 @@ message TrainingInfoProto {
   // must be unique.
   repeated StringStringEntryProto update_binding = 7;
 
-  // A graph that describes how to compute the initial tensors upon starting
-  // the training process. Each initializer graph has zero inputs and one
-  // output, which acts as the initialized tensor. The initialization graph
-  // outputs will have exactly the same names as the "initializer" tensors in
-  // the inference graph.
-  GraphProto model_initializer = 8;
+  // This field is a graph that describes how to compute the initial tensors
+  // upon starting the training process. Each initializer graph has no input
+  // and can have multiple outputs. Assigning those outputs to the associated
+  // initializers follows the relation defined by update_binding as if
+  // model_initializer is another training algorithm.
+  optional GraphProto initialization = 8;
 }
 
 // Models

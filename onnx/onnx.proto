@@ -319,7 +319,7 @@ message TrainingInfoProto {
   // output, which acts as the initialized tensor. The initialization graph
   // outputs will have exactly the same names as the "initializer" tensors in
   // the inference graph.
-  GraphProto model_initializer = 8;
+  optional GraphProto model_initializer = 8;
 }
 
 // Models
