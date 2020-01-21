@@ -7,8 +7,6 @@
   * <a href="#Abs">Abs</a>
   * <a href="#Acos">Acos</a>
   * <a href="#Acosh">Acosh</a>
-  * <a href="#Adagrad">Adagrad</a>
-  * <a href="#Adam">Adam</a>
   * <a href="#Add">Add</a>
   * <a href="#And">And</a>
   * <a href="#ArgMax">ArgMax</a>
@@ -55,7 +53,6 @@
   * <a href="#GlobalAveragePool">GlobalAveragePool</a>
   * <a href="#GlobalLpPool">GlobalLpPool</a>
   * <a href="#GlobalMaxPool">GlobalMaxPool</a>
-  * <a href="#Gradient">Gradient</a>
   * <a href="#Greater">Greater</a>
   * <a href="#HardSigmoid">HardSigmoid</a>
   * <a href="#Hardmax">Hardmax</a>
@@ -80,10 +77,8 @@
   * <a href="#MaxRoiPool">MaxRoiPool</a>
   * <a href="#MaxUnpool">MaxUnpool</a>
   * <a href="#Mean">Mean</a>
-  * <a href="#MeanSquaredError">MeanSquaredError</a>
   * <a href="#Min">Min</a>
   * <a href="#Mod">Mod</a>
-  * <a href="#Momentum">Momentum</a>
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
@@ -140,7 +135,6 @@
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
-  * <a href="#SoftmaxCrossEntropy">SoftmaxCrossEntropy</a>
   * <a href="#Softplus">Softplus</a>
   * <a href="#Softsign">Softsign</a>
   * <a href="#SpaceToDepth">SpaceToDepth</a>
@@ -163,6 +157,7 @@
   * <a href="#Upsample">Upsample</a>
   * <a href="#Where">Where</a>
   * <a href="#Xor">Xor</a>
+  * <sub>experimental</sub> <a href="#Gradient">Gradient</a>
 
   **Operators with function registered:**
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
@@ -354,393 +349,6 @@ x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
 y = np.arccosh(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acosh')
-```
-
-</details>
-
-
-### <a name="Adagrad"></a><a name="adagrad">**Adagrad**</a>
-
-  Compute one iteration of ADAGRAD, a stochastic gradient based optimization
-  algorithm. This operator can conduct the optimization of multiple tensor variables.
-  Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
-  some parameters:
-   
-   - The initial learning-rate "R".
-   - The update count "T". That is, the number of training iterations conducted.
-   - A L2-norm regularization coefficient "norm_coefficient".
-   - A learning-rate decay factor "decay_factor".
-   - A small constant "epsilon" to avoid dividing-by-zero. 
-  
-  At each ADAGRAD iteration, the optimized tensors are moved along a direction
-  computed based on their estimated gradient and accumulated squared gradient. Assume
-  that only a single tensor "X" is updated by this operator. We need the value of "X",
-  its gradient "G", and its accumulated squared gradient "H". Therefore, variables in
-  this operator's input list are sequentially "R", "T", "X", "G", and "H". Other
-  parameters are given as attributes because they are usually constants. Also, the
-  corresponding output tensors are the new value of "X" (called "X_new"), and then
-  the new accumulated squared gradient (called "H_new"). Those outputs are computed
-  from the given inputs following the pseudo code below.
-  
-  Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
-  numpy-style broadcasting support. The pseudo code to compute those outputs is:
-  
-  ```
-  // Compute a scalar learning-rate factor. If X is never updated, T should be 0.
-  r = R / (1 + T * decay_factor);
-  
-  // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
-  G_regularized = norm_coefficient * X + G;
-  
-  // Compute new accumulated squared gradient.
-  H_new = H + G_regularized * G_regularized;
-  
-  // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
-  // compute square root element-wisely.
-  H_adaptive = Sqrt(H_new) + epsilon
-  
-  // Compute the new value of "X".
-  X_new = X - r * G_regularized / H_adaptive;
-  ```
-  
-  If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2", the same
-  pseudo code may be extended to handle all tensors jointly. More specifically, we can view "X" as a
-  concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
-  be concatenated too) and then just reuse the entire pseudo code.
-  
-  Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
-  In that reference paper, this operator is a spacial case of the Figure 1's composite mirror
-  descent update.
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>decay_factor</tt> : float (default is 0.0)</dt>
-<dd>The decay factor of learning rate after one update.The effective learning rate is computed by r = R / (1 + T * decay_factor). Default to 0 so that increasing update counts doesn't reduce the learning rate.</dd>
-<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
-<dd>Small scalar to avoid dividing by zero.</dd>
-<dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
-<dd>Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
-</dl>
-
-#### Inputs (3 - &#8734;)
-
-<dl>
-<dt><tt>R</tt> : T1</dt>
-<dd>The initial learning rate.</dd>
-<dt><tt>T</tt> : T2</dt>
-<dd>The update count of "X". It should be a scalar.</dd>
-<dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
-<dd>It sequentially contains the current values of optimized tensors and then the current values of accumulated gradient. For example, if two tensor "X_1" and "X_2" are optimized, The input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>outputs</tt> (variadic, heterogeneous) : T2</dt>
-<dd>It sequentially contains the new values of optimized tensors and then the new values of accumulated gradient. For example, if two tensor "X_1" and "X_2" are optimized, the output list would be [new value of "X_1," new value of "X_2" new accumulated squared gradient of "X_1", new accumulated squared gradient of "X_2"].</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float scalars.</dd>
-<dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain output types to 64-bit integer scalars.</dd>
-<dt><tt>T3</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>adagrad</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-epsilon = 1e-5
-decay_factor = 0.1
-
-# Create operator.
-node = onnx.helper.make_node('Adagrad',
-                             inputs=['R', 'T', 'X', 'G', 'H'],
-                             outputs=['X_new', 'H_new'],
-                             norm_coefficient=norm_coefficient,
-                             epsilon=epsilon,
-                             decay_factor=decay_factor
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-x = np.array([1.0], dtype=np.float32)
-g = np.array([-1.0], dtype=np.float32)
-h = np.array([2.0], dtype=np.float32)
-
-# Compute expected outputs of Adagrad.
-x_new, h_new = apply_adagrad(r, t, x, g, h,
-                             norm_coefficient, epsilon, decay_factor)
-
-# Check results.
-expect(node, inputs=[r, t, x, g, h],
-       outputs=[x_new, h_new], name='test_adagrad')
-```
-
-</details>
-
-
-<details>
-<summary>adagrad_multiple</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-epsilon = 1e-5
-decay_factor = 0.1
-
-node = onnx.helper.make_node('Adagrad',
-                             inputs=['R', 'T', 'X1', 'X2',
-                                     'G1', 'G2', 'H1', 'H2'],
-                             outputs=['X1_new', 'X2_new',
-                                      'H1_new', 'H2_new'],
-                             norm_coefficient=norm_coefficient,
-                             epsilon=epsilon,
-                             decay_factor=decay_factor
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-
-x1 = np.array([1.0], dtype=np.float32)
-g1 = np.array([-1.0], dtype=np.float32)
-h1 = np.array([2.0], dtype=np.float32)
-
-x2 = np.array([1.0, 2.0], dtype=np.float32)
-g2 = np.array([-1.0, -3.0], dtype=np.float32)
-h2 = np.array([4.0, 1.0], dtype=np.float32)
-
-# Compute expected outputs of Adagrad.
-x1_new, h1_new = apply_adagrad(r, t, x1, g1, h1,
-                               norm_coefficient, epsilon, decay_factor)
-x2_new, h2_new = apply_adagrad(r, t, x2, g2, h2,
-                               norm_coefficient, epsilon, decay_factor)
-
-# Check results.
-expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
-       outputs=[x1_new, x2_new, h1_new, h2_new], name='test_adagrad_multiple')
-```
-
-</details>
-
-
-### <a name="Adam"></a><a name="adam">**Adam**</a>
-
-  Compute one iteration of Adam, a stochastic gradient based optimization
-  algorithm. This operator can conduct the optimization of multiple tensor variables.
-  Let's define the behavior of this operator. First of all, Adam requires
-  some parameters:
-   
-   - The learning-rate "R".
-   - The update count "T". That is, the number of training iterations conducted.
-   - A L2-norm regularization coefficient "norm_coefficient".
-   - A small constant "epsilon" to avoid dividing-by-zero. 
-   - Two coefficients, "alpha" and "beta".
-  
-  At each Adam iteration, the optimized tensors are moved along a direction
-  computed based on their exponentially-averaged historical gradient and
-  exponentially-averaged historical squared gradient. Assume that only a tensor
-  "X" is being optimized. The rest of required information is
-  
-   - the value of "X",
-   - "X"'s gradient (denoted by "G"),
-   - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
-   - "X"'s exponentially-averaged historical squared gradient (denoted by "H").
-  
-  Some of those parameters are passed into this operator as input tensors and others
-  are stored as this operator's attributes. Specifically, this operator's input tensor
-  list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
-  the second input, and so on. Other parameters are given as attributes because they
-  are constants. Moreover, the corresponding output tensors are 
-  
-   - the new value of "X" (called "X_new"),
-   - the new exponentially-averaged historical gradient (denoted by "V_new"), and
-   - the new exponentially-averaged historical squared gradient (denoted by "H_new").
-  
-  Those outputs are computed following the pseudo code below.
-  
-  Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
-  numpy-style broadcasting support. The pseudo code to compute those outputs is:
-  
-  ```
-  // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
-  G_regularized = norm_coefficient * X + G;
-  
-  // Update exponentially-averaged historical gradient.
-  V_new = alpha * V + (1 - alpha) * G_regularized;
-  
-  // Update exponentially-averaged historical squared gradient.
-  H_new = beta * H + (1 - beta) * G_regularized * G_regularized;
-  
-  // Compute the element-wise square root of H_new. V_new will be element-wisely
-  // divided by H_sqrt for a better update direction.
-  H_sqrt = Sqrt(H_new) + epsilon;
-  
-  // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
-  R_adjusted = R * Sqrt(1 - beta**T) / (1 - alpha**T);
-  
-  // Compute new value of "X".
-  X_new = X - R_adjusted * V_new / H_sqrt
-  ```
-  
-  If there are multiple inputs to be optimized, the pseudo code will be applied
-  independently to each of them.
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float (default is 0.9)</dt>
-<dd>Coefficient of previously accumulated gradient in running average. Default to 0.9.</dd>
-<dt><tt>beta</tt> : float (default is 0.999)</dt>
-<dd>Coefficient of previously accumulated squared-gradient in running average. Default to 0.999.</dd>
-<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
-<dd>Small scalar to avoid dividing by zero.</dd>
-<dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
-<dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
-</dl>
-
-#### Inputs (3 - &#8734;)
-
-<dl>
-<dt><tt>R</tt> : T1</dt>
-<dd>The initial learning rate.</dd>
-<dt><tt>T</tt> : T2</dt>
-<dd>The update count of "X". It should be a scalar.</dd>
-<dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
-<dd>It sequentially contains the tensors to be optimized, the gradient, the averaged gradient (aka momentum), and the averaged squared gradient. For example, to optimize tensors "X_1" and "X_2,", the "inputs" would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", averaged gradient of "X_1", averaged gradient of "X_2", averaged squared gradient of "X_1", averaged squared gradient of "X_2"].</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>outputs</tt> (variadic, heterogeneous) : T3</dt>
-<dd>It sequentially contains the new values of optimized tensors, then the new values of averaged gradient, and finally values of averaged squared gradient. For example, if two tensors "X_1" and "X_2" are optimized, the "outputs" would be [new value of "X_1,", new value of "X_2," new averaged gradient of "X_1", new averaged gradient of "X_2," new averaged squared gradient of "X_1," new averaged squared gradient of "X_2"].</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float scalars.</dd>
-<dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain output types to 64-bit integer scalars.</dd>
-<dt><tt>T3</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>adam</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-alpha = 0.95
-beta = 0.1
-epsilon = 1e-7
-
-# Create operator.
-node = onnx.helper.make_node('Adam',
-                             inputs=['R', 'T', 'X', 'G', 'V', 'H'],
-                             outputs=['X_new', 'V_new', 'H_new'],
-                             norm_coefficient=norm_coefficient,
-                             alpha=alpha,
-                             beta=beta,
-                             epsilon=epsilon
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-x = np.array([1.2, 2.8], dtype=np.float32)
-g = np.array([-0.94, -2.5], dtype=np.float32)
-v = np.array([1.7, 3.6], dtype=np.float32)
-h = np.array([0.1, 0.1], dtype=np.float32)
-
-# Compute expected outputs of Adam.
-x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
-                                 norm_coefficient, alpha, beta,
-                                 epsilon)
-
-# Check results.
-expect(node, inputs=[r, t, x, g, v, h],
-       outputs=[x_new, v_new, h_new], name='test_adam')
-```
-
-</details>
-
-
-<details>
-<summary>adam_multiple</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-alpha = 0.95
-beta = 0.85
-epsilon = 1e-2
-
-node = onnx.helper.make_node('Adam',
-                             inputs=['R', 'T', 'X1', 'X2',
-                                     'G1', 'G2', 'V1', 'V2',
-                                     'H1', 'H2'],
-                             outputs=['X1_new', 'X2_new',
-                                      'V1_new', 'V2_new',
-                                      'H1_new', 'H2_new'],
-                             norm_coefficient=norm_coefficient,
-                             alpha=alpha,
-                             beta=beta
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-
-x1 = np.array([1.0], dtype=np.float32)
-g1 = np.array([-1.0], dtype=np.float32)
-v1 = np.array([2.0], dtype=np.float32)
-h1 = np.array([0.5], dtype=np.float32)
-
-x2 = np.array([1.0, 2.0], dtype=np.float32)
-g2 = np.array([-1.0, -3.0], dtype=np.float32)
-v2 = np.array([4.0, 1.0], dtype=np.float32)
-h2 = np.array([1.0, 10.0], dtype=np.float32)
-
-# Compute expected outputs of Adam.
-x1_new, v1_new, h1_new = apply_adam(r, t, x1, g1, v1, h1,
-                            norm_coefficient, alpha, beta,
-                            epsilon)
-x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
-                            norm_coefficient, alpha, beta,
-                            epsilon)
-
-# Check results.
-expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
-       outputs=[x1_new, x2_new, v1_new, v2_new, h1_new, h2_new],
-       name='test_adam_multiple')
 ```
 
 </details>
@@ -6660,258 +6268,6 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 </details>
 
 
-### <a name="Gradient"></a><a name="gradient">**Gradient**</a>
-
-  Gradient operator computes the partial derivatives of a specific tensor to
-  some other tensors. This operator is widely used in gradient-based training
-  algorithms. To illustrate its use, let's consider a computation graph,
-  
-  ```
-  X -----.
-         |
-         v
-  W --> Conv --> H --> Gemm --> Y
-                        ^
-                        |
-                        Z
-  ```
-  
-  , where W and Z are trainable tensors. Note that operators' attributes are
-  omitted for the sake of simplicity. Let dY/dW (dY/dZ) be the gradient of
-  Y with respect to W (Z). The user can compute gradient by inserting Gradient
-  operator to form
-  
-  ```
-  W --> Conv --> H --> Gemm --> Y
-  |      ^              ^
-  |      |              |
-  |      X              Z
-  |      |              |
-  |      |   .----------'
-  |      |   |  (X/W/Z is the 1st/2nd/3rd input of Gradient as shown in "xs")
-  |      v   v
-  '---> Gradient(xs=["X", "W", "Z"], y="Y") ---> dY/dX (1st output of Gradient)
-         |   |
-         |   '-----------------------------------> dY/dW (2nd output of Gradient)
-         |
-         '---------------------------------------> dY/dZ (3rd output of Gradient)
-  ```
-  
-  , where the content inside the braces of Gradient are attributes. The attribute
-  "xs" specifies the necessary inputs to compute the variable specified by
-  attribute "y". To compute gradient, the runtime should identify a sub-graph with
-  inputs specified by "xs" and outputs containing "y"'s content and do a backward
-  pass (or other auto-differentiation techniques whenever needed).
-  
-  Since X is not trainable tensor, the user can avoid the creation of dY/dX by
-  assigning an empty string to the 1st output name of that Gradient. In other
-  words, all Gradient's outputs are optional. Note that the concept of optional
-  outputs can also be found in ONNX's RNN, GRU, and LSTM.
-  
-  Gradient operator can compute derivative against intermediate tensors. For
-  example, the gradient of Y with respect to H can be done in
-  
-  ```
-  W --> Conv --> H --> Gemm --> Y
-         ^       |      ^
-         |       |      |
-         X       |      Z
-         .-------'      |
-         |   .----------'
-         |   | (H/Z is the 1st/2nd input of Gradient as shown in "xs")
-         v   v
-        Gradient(xs=["H", "Z"], y="Y")
-         |   |
-         |   '-----------------------------------> dY/dH (1st output of Gradient)
-         |
-         '---------------------------------------> dY/dZ (2nd output of Gradient)
-  ```
-  
-  It is possible to represent high-order differentiation using Gradient operator.
-  An example for linear model is
-  
-  ```
-  W --> Gemm --> Y --> Loss --> O
-         ^              ^
-         |              |
-         X              L
-  ```
-  
-  To compute the 2nd order derivative of O with respect to W (denoted by
-  d^2O/dW^2), one can do
-  
-  ```
-  W --> Gemm --> Y --> Loss --> O
-  |      ^              ^
-  |      |              |
-  |      X              L
-  |      |
-  |      |
-  +------+--> Gradient(xs=["X", "W"], y="Y") ---> dO/dX (1st output of Gradient)
-  |      |      |
-  |      |      '---> dO/dW (2nd output of Gradient)
-  |      v
-  '---> Gradient(xs=["X", "W"], y="dO/dW") ---> d(dO/dW)dX (1st output of
-         |                                          Gradient)
-         |
-         |
-         '---> d^2O/dW^2 (2nd output of Gradient)
-  ```
-  
-  When the inputs of Gradient are the tensors named in "xs", the computation
-  can be optimized. More specifically, a forward pass can be reused if the
-  gradient is computed via reverse-mode auto-differentiation.
-  We can feed different tensors to the identified graph. For example, one
-  can compute the gradient of Y with respect to H by substituting Y_1 into Y
-  and H_1 into H.
-  
-  ```
-  W --> Conv --> H --> Gemm --> Y
-         ^              ^
-         |              |
-         X              Z
-  
-             Z_1 (the 2nd input of Gradient)
-             |
-             v
-  W_1 --> Gradient(xs=["H", "Z"], y="Y") ---> dY/dX when Y = Y_1
-           |   |
-           |   '-----------------------------------> dY/dW (2nd output of Gradient)
-           |
-           '---------------------------------------> dY/dZ (3rd output of Gradient)
-  ```
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>xs</tt> : list of strings (required)</dt>
-<dd>Input tensor names of the differentiated sub-graph. It contains and only contains the necessary differentiated inputs of a (sub-)graph. Variables (usually called intermediate variables) which can be generated by inputs cannot be included in this attribute.</dd>
-<dt><tt>y</tt> : string (required)</dt>
-<dd>The targeted tensor. It can be viewed as the output of the differentiated function. The attribute "xs" and attribute "zs" are the minimal variable set that determines the value  of "y".</dd>
-<dt><tt>zs</tt> : list of strings</dt>
-<dd>Input tensor names of the differentiated sub-graph. It contains and only contains the necessary non-differentiated  inputs of a (sub-)graph. Variables (usually called intermediate variables) which can be generated by inputs cannot be included in this attribute.</dd>
-</dl>
-
-#### Inputs (1 - &#8734;)
-
-<dl>
-<dt><tt>Input</tt> (variadic, heterogeneous) : T2</dt>
-<dd>The values fed into graph identified by the attributes. The i-th input is the value of the i-th tensor specified in the concatenated list of attribute "xs" and attribute "zs". For example, if xs=["A", "B"] and zs=["C"], the first input is used as the value of symbol "A" and the 3rd input is substituted for all the occurrences of "C".</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>Output</tt> (variadic, heterogeneous) : T1</dt>
-<dd>The gradient of the tensors specified in attribute "y" with respect to "xs". The i-th output is the gradient of "y" with respect to the i-th tensor specified in the attribute "xs".</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain associated inputs and outputs to floating-point tensors.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
-<dd>Allow associated inputs and outputs to be any kinds of tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>gradient_scalar_add</summary>
-
-```python
-add_node = onnx.helper.make_node('Add',
-                                 ['a', 'b'], ['c'], name='my_add')
-gradient_node = onnx.helper.make_node(
-    'Gradient', ['a', 'b'],
-    ['dc_da', 'dc_db'], name='my_gradient',
-    xs=['a', 'b'], y='c')
-
-a = np.array(1.0).astype(np.float32)
-b = np.array(2.0).astype(np.float32)
-c = a + b
-# dc / da = d(a+b) / da = 1
-dc_da = np.array(1).astype(np.float32)
-# db / db = d(a+b) / db = 1
-dc_db = np.array(1).astype(np.float32)
-
-graph = onnx.helper.make_graph(
-    nodes=[add_node, gradient_node],
-    name='GradientOfAdd',
-    inputs=[
-        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
-                                           []),
-        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
-                                           [])],
-    outputs=[
-        onnx.helper.make_tensor_value_info('c', onnx.TensorProto.FLOAT,
-                                           []),
-        onnx.helper.make_tensor_value_info('dc_da',
-                                           onnx.TensorProto.FLOAT, []),
-        onnx.helper.make_tensor_value_info('dc_db',
-                                           onnx.TensorProto.FLOAT, [])])
-
-model = onnx.helper.make_model(graph, producer_name='backend-test')
-expect(model, inputs=[a, b], outputs=[c, dc_da, dc_db],
-       name='test_gradient_of_add')
-```
-
-</details>
-
-
-<details>
-<summary>gradient_scalar_add_and_mul</summary>
-
-```python
-add_node = onnx.helper.make_node('Add',
-                                 ['a', 'b'], ['c'], name='my_add')
-mul_node = onnx.helper.make_node('Mul',
-                                 ['c', 'a'], ['d'], name='my_mul')
-gradient_node = onnx.helper.make_node(
-    'Gradient', ['a', 'b'],
-    ['dd_da', 'dd_db'], name='my_gradient',
-    xs=['a', 'b'], y='d')
-
-a = np.array(1.0).astype(np.float32)
-b = np.array(2.0).astype(np.float32)
-c = a + b
-# d = a * c = a * (a + b)
-d = a * c
-# dd / da = d(a*a+a*b) / da = 2 * a + b
-dd_da = 2 * a + b
-# dd / db = d(a*a+a*b) / db = a
-dd_db = a
-
-graph = onnx.helper.make_graph(
-    nodes=[add_node, mul_node, gradient_node],
-    name='GradientOfTwoOperators',
-    inputs=[
-        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
-                                           []),
-        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
-                                           [])],
-    outputs=[
-        onnx.helper.make_tensor_value_info('d', onnx.TensorProto.FLOAT,
-                                           []),
-        onnx.helper.make_tensor_value_info('dd_da',
-                                           onnx.TensorProto.FLOAT, []),
-        onnx.helper.make_tensor_value_info('dd_db',
-                                           onnx.TensorProto.FLOAT, [])])
-
-model = onnx.helper.make_model(graph, producer_name='backend-test')
-expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
-       name='test_gradient_of_add_and_mul')
-```
-
-</details>
-
-
 ### <a name="Greater"></a><a name="greater">**Greater**</a>
 
   Returns the tensor resulted from performing the `greater` logical operation
@@ -9625,64 +8981,6 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
-### <a name="MeanSquaredError"></a><a name="meansquarederror">**MeanSquaredError**</a>
-
-  Loss function that measures the
-  mean squared error (squared L2 norm) between each element in the 'scores'
-  and 'labels'.
-  
-  The loss can be described as:
-      L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
-  , where N is the batch size.
-  
-  If 'weights' is provided, it should be broadcastable to shape of 'scores'.
-      L = Mul(weights, L)
-  , where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
-  
-  Finally, L is reduced:
-  L = ReduceSum(L), if reduction = 'sum';
-      ReduceMean(L), if reduction = 'mean';
-      ReduceMean(L, axes=[0]), if reduction = 'none';
-  
-  .
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed. 'mean': the sum of the output will be divided by the batch_size.</dd>
-</dl>
-
-#### Inputs (2 - 3)
-
-<dl>
-<dt><tt>scores</tt> : T</dt>
-<dd>The predicted outputs.</dd>
-<dt><tt>labels</tt> : T</dt>
-<dd>The ground truth output tensor, same dimensions as 'scores'.</dd>
-<dt><tt>weights</tt> (optional) : T</dt>
-<dd>Weights acts as a coefficient for the loss, it should be broadcastable to shape of 'scores'.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Weighted loss float Tensor. If reduction is none, this has the shape of [batch_size]; otherwise, it is scalar.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
@@ -10156,244 +9454,6 @@ y = np.array([2, 3, 8]).astype(np.uint8)
 z = np.mod(x, y)  # expected output [0, 1, 5]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mod_uint8')
-```
-
-</details>
-
-
-### <a name="Momentum"></a><a name="momentum">**Momentum**</a>
-
-  Compute one iteration of stochastic gradient update with momentum.
-  This operator can conduct the optimization of multiple tensor variables.
-  
-  Let's define the behavior of this operator. As you can imagine, SG with momentum requires
-  several parameters:
-   
-   - The learning-rate "R".
-   - The update count "T". That is, the number of conducted training iterations. It should
-     be zero in the first training iteration.
-   - A L2-norm regularization coefficient "norm_coefficient".
-   - A decay coefficient of previous accumulated gradient (i.e., momentum) "alpha".
-   - The scaling coefficient of current gradient "beta".
-   - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
-     be used.
-  
-  For the sake of simplicity, assume that there is only one tensor (called "X") to be optimized.
-  Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
-  Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
-  momentum (called "V_new").
-  
-  This operator supports two different momentum algorithms. Set the attribute "mode" to
-  "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
-  "standard" to use standard momentum. Computation details are described subsequently.
-  
-  Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
-  
-  Pseudo code for SG with standard momentum:
-  
-  ```
-  // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
-  // values of all elements in X.
-  G_regularized = norm_coefficient * X + G
-  
-  // In the first training iteration, beta should always be 1.
-  beta_adjusted = T > 0 ? beta : 1
-  
-  // Compute the current momentum based on previous momentum and the current gradient.
-  V_new = alpha * V + beta_adjusted * G_regularized
-  
-  // Update X.
-  X_new = X - R * V_new
-  ```
-  
-  Pseudo code for SG with Nesterov's momentum:
-  
-  ```
-  // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
-  // values of all elements in X.
-  G_regularized = norm_coefficient * X + G;
-  
-  // In the first training iteration, beta should always be 1.
-  beta_adjusted = T > 0 ? beta : 1
-  
-  // Compute the current momentum based on previous momentum and the current gradient.
-  V_new = alpha * V + beta_adjusted * G_regularized;
-  
-  // Compute final update direction and then update X.
-  X_new = X - R * (G_regularized + alpha * V_new)
-  ```
-  
-  If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
-  pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
-  concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
-  be concatenated too) and then our pseudo code becomes applicable.
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float (required)</dt>
-<dd>The decay factor of momentum. It should be a scalar.</dd>
-<dt><tt>beta</tt> : float (required)</dt>
-<dd>The coefficient of gradient in computing new momentum. It should be a scalar.</dd>
-<dt><tt>mode</tt> : string (required)</dt>
-<dd>Its value should be either "nesterov" or "standard". The value "nesterov" leads to the use of Nesterov's momentum while "standard" invokes stochastic gradient method using standard momentum</dd>
-<dt><tt>norm_coefficient</tt> : float (required)</dt>
-<dd>Coefficient of 0.5 * norm_coefficient * ||X||^2.</dd>
-</dl>
-
-#### Inputs (3 - &#8734;)
-
-<dl>
-<dt><tt>R</tt> : T1</dt>
-<dd>The learning rate.</dd>
-<dt><tt>T</tt> : T2</dt>
-<dd>Update count of "X". It should be a scalar.</dd>
-<dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
-<dd>It sequentially contains the current values of optimized tensors, then their gradient tensors, and finally their momentum tensors. For example, if two tensors "X_1" and "X_2" are optimized, The expected input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", momentum of "X_1", momentum of "X_2"].</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>outputs</tt> (variadic, heterogeneous) : T3</dt>
-<dd>It sequentially contains the new values of optimized tensors and then the new values of their momentum tensors. For example, if two tensors "X_1" and "X_2" are optimized, the output list would be [new value of "X_1," new value of "X_2" new momentum of "X_1", new momentum of "X_2"].</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float scalars.</dd>
-<dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain input types to 64-bit integer scalars.</dd>
-<dt><tt>T3</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>momentum</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-alpha = 0.95
-beta = 0.1
-
-# Create operator.
-node = onnx.helper.make_node('Momentum',
-                             inputs=['R', 'T', 'X', 'G', 'V'],
-                             outputs=['X_new', 'V_new'],
-                             norm_coefficient=norm_coefficient,
-                             alpha=alpha,
-                             beta=beta,
-                             mode='standard'
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-x = np.array([1.2, 2.8], dtype=np.float32)
-g = np.array([-0.94, -2.5], dtype=np.float32)
-v = np.array([1.7, 3.6], dtype=np.float32)
-
-# Compute expected outputs of Momentum.
-x_new, v_new = apply_momentum(r, t, x, g, v,
-                              norm_coefficient, alpha, beta)
-
-# Check results.
-expect(node, inputs=[r, t, x, g, v],
-       outputs=[x_new, v_new], name='test_momentum')
-```
-
-</details>
-
-
-<details>
-<summary>momentum_multiple</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-alpha = 0.95
-beta = 0.85
-
-node = onnx.helper.make_node('Momentum',
-                             inputs=['R', 'T', 'X1', 'X2',
-                                     'G1', 'G2', 'H1', 'H2'],
-                             outputs=['X1_new', 'X2_new',
-                                      'V1_new', 'V2_new'],
-                             norm_coefficient=norm_coefficient,
-                             alpha=alpha,
-                             beta=beta,
-                             mode='standard'
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-
-x1 = np.array([1.0], dtype=np.float32)
-g1 = np.array([-1.0], dtype=np.float32)
-v1 = np.array([2.0], dtype=np.float32)
-
-x2 = np.array([1.0, 2.0], dtype=np.float32)
-g2 = np.array([-1.0, -3.0], dtype=np.float32)
-v2 = np.array([4.0, 1.0], dtype=np.float32)
-
-# Compute expected outputs of Momentum.
-x1_new, v1_new = apply_momentum(r, t, x1, g1, v1,
-                                norm_coefficient, alpha, beta)
-x2_new, v2_new = apply_momentum(r, t, x2, g2, v2,
-                                norm_coefficient, alpha, beta)
-
-# Check results.
-expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2],
-       outputs=[x1_new, x2_new, v1_new, v2_new], name='test_momentum_multiple')
-```
-
-</details>
-
-
-<details>
-<summary>nesterov_momentum</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.01
-alpha = 0.95
-beta = 1.0
-
-# Create operator.
-node = onnx.helper.make_node('Momentum',
-                             inputs=['R', 'T', 'X', 'G', 'V'],
-                             outputs=['X_new', 'V_new'],
-                             norm_coefficient=norm_coefficient,
-                             alpha=alpha,
-                             beta=beta,
-                             mode='nesterov'
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-x = np.array([1.2, 2.8], dtype=np.float32)
-g = np.array([-0.94, -2.5], dtype=np.float32)
-v = np.array([1.7, 3.6], dtype=np.float32)
-
-# Compute expected outputs of Adagrad.
-x_new, v_new = apply_nesterov(r, t, x, g, v,
-                              norm_coefficient, alpha, beta)
-
-# Check results.
-expect(node, inputs=[r, t, x, g, v],
-       outputs=[x_new, v_new], name='test_nesterov_momentum')
 ```
 
 </details>
@@ -17803,63 +16863,6 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### <a name="SoftmaxCrossEntropy"></a><a name="softmaxcrossentropy">**SoftmaxCrossEntropy**</a>
-
-  Loss function that measures the softmax cross entropy
-  between 'scores' and 'labels'.
-  
-  The loss can be described as:
-      L = (l_1, l_2, ..., l_N), where N is the batch_size
-  
-  The loss for one sample, l_n, can caculated as follows
-      let p = Softmax(scores)
-      l_n = -sum(label_i * log(p_i)), where i is the index of classes.
-  or
-      l_n = -sum(weight_i * label_i * log(p_i)), if 'weights' is provided.
-  
-  Finally, L is reduced:
-  L = ReduceSum(L), if reduction = 'sum';
-      ReduceMean(L), if reduction = 'mean';
-      L, if reduction = 'none'
-  
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt> </tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed. 'mean': the sum of the output will be divided by the batch_size.</dd>
-</dl>
-
-#### Inputs (2 - 3)
-
-<dl>
-<dt><tt>scores</tt> : T</dt>
-<dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, d1, d2 , ..., dk], where K is the number of dimensions.</dd>
-<dt><tt>labels</tt> : T</dt>
-<dd>The ground truth output tensor, same dimensions as 'scores'. Usualy, it's a one-hot representation of groud-truth class.</dd>
-<dt><tt>weights</tt> (optional) : T</dt>
-<dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Weighted loss float Tensor. If reduction is 'none', this has the shape of [batch_size], or [batch_size, d1, d2, ..., dk] in case of K-dimensional loss. Otherwise, it is a scalar.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
 ### <a name="Softplus"></a><a name="softplus">**Softplus**</a>
 
   Softplus takes one input data (Tensor<T>) and produces one output data
@@ -20224,6 +19227,260 @@ y = (np.random.randn(3, 1, 5, 6) > 0).astype(np.bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_xor_bcast4v4d')
+```
+
+</details>
+
+
+### <sub>experimental</sub> <a name="Gradient"></a><a name="gradient">**Gradient**</a>
+
+  Gradient operator computes the partial derivatives of a specific tensor to
+  some other tensors. This operator is widely used in gradient-based training
+  algorithms. To illustrate its use, let's consider a computation graph,
+  
+  ```
+  X -----.
+         |
+         v
+  W --> Conv --> H --> Gemm --> Y
+                        ^
+                        |
+                        Z
+  ```
+  
+  , where W and Z are trainable tensors. Note that operators' attributes are
+  omitted for the sake of simplicity. Let dY/dW (dY/dZ) be the gradient of
+  Y with respect to W (Z). The user can compute gradient by inserting Gradient
+  operator to form another graph shown below.
+  
+  ```
+  W --> Conv --> H --> Gemm --> Y
+  |      ^              ^
+  |      |              |
+  |      X              Z
+  |      |              |
+  |      |   .----------'
+  |      |   |  (X/W/Z is the 1st/2nd/3rd input of Gradient as shown in "xs")
+  |      v   v
+  '---> Gradient(xs=["W", "Z"], zs=["X"], y="Y")
+         |   |
+         |   '-----------------------------------> dY/dW (1st output of Gradient)
+         |
+         '---------------------------------------> dY/dZ (2nd output of Gradient)
+  ```
+  
+  By definition, the tensor "y" is a function of independent variables in "xs"
+  and "zs". Since we only compute the gradient of "y" w.r.t. the differentiable
+  tensors in "xs", this Gradient only outputs dY/dW and dY/dZ. Note that "H"
+  cannot appear in "xs" and "zs". The reason is that "H" can be determined by
+  tensors "W" and "X" and therefore "H" is not an independent variable.
+  
+  All outputs are optional. If needed, for example, user can assign an empty
+  string to the 1st output name of that Gradient to skip the generation of dY/dW.
+  Note that the concept of optional outputs can also be found in ONNX's RNN, GRU,
+  and LSTM.
+  
+  Gradient operator can compute derivative against intermediate tensors. For
+  example, the gradient of Y with respect to H can be done in
+  
+  ```
+  W --> Conv --> H --> Gemm --> Y
+         ^       |      ^
+         |       |      |
+         X       |      Z
+         .-------'      |
+         |   .----------'
+         |   | (H/Z is the 1st/2nd input of Gradient as shown in "xs")
+         v   v
+        Gradient(xs=["H", "Z"], y="Y")
+         |   |
+         |   '-----------------------------------> dY/dH (1st output of Gradient)
+         |
+         '---------------------------------------> dY/dZ (2nd output of Gradient)
+  ```
+  
+  It is possible to represent high-order differentiation using Gradient operator.
+  An example for linear model is
+  
+  ```
+  W --> Gemm --> Y --> Loss --> O
+         ^              ^
+         |              |
+         X              L
+  ```
+  
+  To compute the 2nd order derivative of O with respect to W (denoted by
+  d^2O/dW^2), one can do
+  
+  ```
+  W --> Gemm --> Y --> Loss --> O
+  |      ^              ^
+  |      |              |
+  |      X .------------L
+  |      | |            |
+  |      | |            v
+  +------+-+> Gradient(xs=["X", "W"], zs=["L"], y="O") ---> dO/dX (1st output of Gradient)
+  |      | |    |
+  |      | |    '---> dO/dW (2nd output of Gradient)
+  |      v v
+  '---> Gradient(xs=["X", "W"], zs=["L"], y="dO/dW") ---> d(dO/dW)dX (1st output of
+         |                                                  Gradient)
+         |
+         |
+         '---> d^2O/dW^2 (2nd output of Gradient)
+  ```
+  
+  The tensors named in attributes "xs", "zs", and "y" define the differentiated
+  computation graph, but the inputs to Gradient node define the values at
+  which the gradient is computed. We can feed different tensors to the identified
+  graph. For example, one can compute the gradient of Y with respect to H at 
+  a specific value of H, H_1, by providing that value as an input to the Gradient
+  node.
+  
+  ```
+  W --> Conv --> H --> Gemm --> Y
+         ^              ^
+         |              |
+         X              Z
+  
+            Z_1 (2nd input of Gradient)
+             |
+             v
+  H_1 --> Gradient(xs=["H", "Z"], y="Y") ---> dY/dH when H = H_1 and Y = Y_1.
+             |
+             '------------------------------> dY/dZ (2nd output of Gradient)
+  ```
+  
+  When the inputs of Gradient are the tensors named in "xs", the computation
+  can be optimized. More specifically, intermediate variables in forward pass can
+  be reused if the gradient is computed via reverse-mode auto-differentiation.
+  
+
+#### Version
+
+No versioning maintained for experimental ops.
+#### Attributes
+
+<dl>
+<dt><tt>xs</tt> : list of strings (required)</dt>
+<dd>Input tensor names of the differentiated sub-graph. It contains and only contains the necessary differentiated inputs of a (sub-)graph. Variables (usually called intermediate variables) which can be generated by inputs cannot be included in this attribute.</dd>
+<dt><tt>y</tt> : string (required)</dt>
+<dd>The targeted tensor. It can be viewed as the output of the differentiated function. The attribute "xs" and attribute "zs" are the minimal independent variable set that determines the value of "y".</dd>
+<dt><tt>zs</tt> : list of strings</dt>
+<dd>Input tensor names of the differentiated sub-graph. It contains and only contains the necessary non-differentiated  inputs of a (sub-)graph. Variables (usually called intermediate variables) which can be generated by inputs cannot be included in this attribute.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Inputs</tt> (variadic, heterogeneous) : T2</dt>
+<dd>The values fed into graph identified by the attributes. The i-th input is the value of the i-th tensor specified in the concatenated list of attribute "xs" and attribute "zs". For example, if xs=["A", "B"] and zs=["C"], the first input is used as the value of symbol "A" and the 3rd input is substituted for all the occurrences of "C".</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Outputs</tt> (variadic, heterogeneous) : T1</dt>
+<dd>The gradient of the tensors specified in attribute "y" with respect to "xs". The i-th output is the gradient of "y" with respect to the i-th tensor specified in the attribute "xs".</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain associated inputs and outputs to floating-point tensors.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dd>Allow associated inputs and outputs to be any kinds of tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>gradient_scalar_add</summary>
+
+```python
+add_node = onnx.helper.make_node('Add',
+                                 ['a', 'b'], ['c'], name='my_add')
+gradient_node = onnx.helper.make_node(
+    'Gradient', ['a', 'b'],
+    ['dc_da', 'dc_db'], name='my_gradient',
+    xs=['a', 'b'], y='c')
+
+a = np.array(1.0).astype(np.float32)
+b = np.array(2.0).astype(np.float32)
+c = a + b
+# dc / da = d(a+b) / da = 1
+dc_da = np.array(1).astype(np.float32)
+# db / db = d(a+b) / db = 1
+dc_db = np.array(1).astype(np.float32)
+
+graph = onnx.helper.make_graph(
+    nodes=[add_node, gradient_node],
+    name='GradientOfAdd',
+    inputs=[
+        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
+                                           [])],
+    outputs=[
+        onnx.helper.make_tensor_value_info('c', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('dc_da',
+                                           onnx.TensorProto.FLOAT, []),
+        onnx.helper.make_tensor_value_info('dc_db',
+                                           onnx.TensorProto.FLOAT, [])])
+
+model = onnx.helper.make_model(graph, producer_name='backend-test')
+expect(model, inputs=[a, b], outputs=[c, dc_da, dc_db],
+       name='test_gradient_of_add')
+```
+
+</details>
+
+
+<details>
+<summary>gradient_scalar_add_and_mul</summary>
+
+```python
+add_node = onnx.helper.make_node('Add',
+                                 ['a', 'b'], ['c'], name='my_add')
+mul_node = onnx.helper.make_node('Mul',
+                                 ['c', 'a'], ['d'], name='my_mul')
+gradient_node = onnx.helper.make_node(
+    'Gradient', ['a', 'b'],
+    ['dd_da', 'dd_db'], name='my_gradient',
+    xs=['a', 'b'], y='d')
+
+a = np.array(1.0).astype(np.float32)
+b = np.array(2.0).astype(np.float32)
+c = a + b
+# d = a * c = a * (a + b)
+d = a * c
+# dd / da = d(a*a+a*b) / da = 2 * a + b
+dd_da = 2 * a + b
+# dd / db = d(a*a+a*b) / db = a
+dd_db = a
+
+graph = onnx.helper.make_graph(
+    nodes=[add_node, mul_node, gradient_node],
+    name='GradientOfTwoOperators',
+    inputs=[
+        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
+                                           [])],
+    outputs=[
+        onnx.helper.make_tensor_value_info('d', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('dd_da',
+                                           onnx.TensorProto.FLOAT, []),
+        onnx.helper.make_tensor_value_info('dd_db',
+                                           onnx.TensorProto.FLOAT, [])])
+
+model = onnx.helper.make_model(graph, producer_name='backend-test')
+expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
+       name='test_gradient_of_add_and_mul')
 ```
 
 </details>

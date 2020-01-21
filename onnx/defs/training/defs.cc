@@ -91,26 +91,26 @@ d^2O/dW^2), one can do
 W --> Gemm --> Y --> Loss --> O
 |      ^              ^
 |      |              |
-|      X              L
-|      |
-|      |
-+------+--> Gradient(xs=["X", "W"], y="Y") ---> dO/dX (1st output of Gradient)
-|      |      |
-|      |      '---> dO/dW (2nd output of Gradient)
-|      v
-'---> Gradient(xs=["X", "W"], y="dO/dW") ---> d(dO/dW)dX (1st output of
-       |                                          Gradient)
+|      X .------------L
+|      | |            |
+|      | |            v
++------+-+> Gradient(xs=["X", "W"], zs=["L"], y="O") ---> dO/dX (1st output of Gradient)
+|      | |    |
+|      | |    '---> dO/dW (2nd output of Gradient)
+|      v v
+'---> Gradient(xs=["X", "W"], zs=["L"], y="dO/dW") ---> d(dO/dW)dX (1st output of
+       |                                                  Gradient)
        |
        |
        '---> d^2O/dW^2 (2nd output of Gradient)
 ```
 
-When the inputs of Gradient are the tensors named in "xs", the computation
-can be optimized. More specifically, a forward pass can be reused if the
-gradient is computed via reverse-mode auto-differentiation.
-We can feed different tensors to the identified graph. For example, one
-can compute the gradient of Y with respect to H by substituting Y_1 into Y
-and H_1 into H.
+The tensors named in attributes "xs", "zs", and "y" define the differentiated
+computation graph, but the inputs to Gradient node define the values at
+which the gradient is computed. We can feed different tensors to the identified
+graph. For example, one can compute the gradient of Y with respect to H at 
+a specific value of H, H_1, by providing that value as an input to the Gradient
+node.
 
 ```
 W --> Conv --> H --> Gemm --> Y
@@ -118,15 +118,18 @@ W --> Conv --> H --> Gemm --> Y
        |              |
        X              Z
 
-           Z_1 (the 2nd input of Gradient)
+          Z_1 (2nd input of Gradient)
            |
            v
-W_1 --> Gradient(xs=["H", "Z"], y="Y") ---> dY/dX when Y = Y_1
-         |   |
-         |   '-----------------------------------> dY/dW (2nd output of Gradient)
-         |
-         '---------------------------------------> dY/dZ (3rd output of Gradient)
+H_1 --> Gradient(xs=["H", "Z"], y="Y") ---> dY/dH when H = H_1 and Y = Y_1.
+           |
+           '------------------------------> dY/dZ (2nd output of Gradient)
 ```
+
+When the inputs of Gradient are the tensors named in "xs", the computation
+can be optimized. More specifically, intermediate variables in forward pass can
+be reused if the gradient is computed via reverse-mode auto-differentiation.
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -145,7 +148,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "example, if xs=[\"A\", \"B\"] and zs=[\"C\"], the first input is "
             "used as the value of symbol \"A\" and the 3rd input is "
             "substituted for all the occurrences of \"C\".",
-            "T2",
+            "T1",
             OpSchema::Variadic,
             false)
         .Output(
@@ -155,7 +158,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "with respect to \"xs\". The i-th output is the gradient "
             "of \"y\" with respect to the i-th tensor specified in the "
             "attribute \"xs\".",
-            "T1",
+            "T2",
             OpSchema::Variadic,
             false)
         .Attr(
@@ -184,25 +187,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::STRING)
         .TypeConstraint(
             "T1",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)"},
-            "Constrain associated inputs and outputs to floating-point tensors.")
+            OpSchema::all_tensor_types(),
+            "Allow outputs to be any kinds of tensors.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
              "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(bool)",
-             "tensor(string)"},
-            "Allow associated inputs and outputs to be any kinds of tensors."));
+             "tensor(double)"},
+            "Allow inputs to be any kind of tensor."));
 
 } // namespace ONNX_NAMESPACE

@@ -18,7 +18,8 @@ from ..test_case import TestCase
 
 _NodeTestCases = []
 
-from onnx.onnx_pb import NodeProto, AttributeProto, FunctionProto
+from onnx.onnx_pb import NodeProto, AttributeProto
+from onnx.onnx_operators_pb import FunctionProto
 
 
 def function_expand_helper(node,  # type: NodeProto
