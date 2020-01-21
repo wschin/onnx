@@ -206,6 +206,6 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint64)",
              "tensor(bool)",
              "tensor(string)"},
-            "Allow associated inputs and outputs to be any kinds of tensors."));
+            "Allow inputs to be any kind of tensor."));
 
 } // namespace ONNX_NAMESPACE
