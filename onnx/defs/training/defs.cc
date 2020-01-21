@@ -148,7 +148,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "example, if xs=[\"A\", \"B\"] and zs=[\"C\"], the first input is "
             "used as the value of symbol \"A\" and the 3rd input is "
             "substituted for all the occurrences of \"C\".",
-            "T2",
+            "T1",
             OpSchema::Variadic,
             false)
         .Output(
@@ -158,7 +158,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "with respect to \"xs\". The i-th output is the gradient "
             "of \"y\" with respect to the i-th tensor specified in the "
             "attribute \"xs\".",
-            "T1",
+            "T2",
             OpSchema::Variadic,
             false)
         .Attr(
@@ -187,25 +187,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::STRING)
         .TypeConstraint(
             "T1",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)"},
-            "Constrain associated inputs and outputs to floating-point tensors.")
+            OpSchema::all_tensor_types(),
+            "Allow outputs to be any kinds of tensors.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
              "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(bool)",
-             "tensor(string)"},
-            "Allow associated inputs and outputs to be any kinds of tensors."));
+             "tensor(double)"},
+            "Constrain associated inputs and outputs to floating-point tensors."));
 
 } // namespace ONNX_NAMESPACE
