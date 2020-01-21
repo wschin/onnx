@@ -19316,26 +19316,26 @@ expect(node, inputs=[x, y], outputs=[z],
   W --> Gemm --> Y --> Loss --> O
   |      ^              ^
   |      |              |
-  |      X              L
-  |      |
-  |      |
-  +------+--> Gradient(xs=["X", "W"], y="Y") ---> dO/dX (1st output of Gradient)
-  |      |      |
-  |      |      '---> dO/dW (2nd output of Gradient)
-  |      v
-  '---> Gradient(xs=["X", "W"], y="dO/dW") ---> d(dO/dW)dX (1st output of
-         |                                          Gradient)
+  |      X .------------L
+  |      | |            |
+  |      | |            v
+  +------+-+> Gradient(xs=["X", "W"], zs=["L"], y="O") ---> dO/dX (1st output of Gradient)
+  |      | |    |
+  |      | |    '---> dO/dW (2nd output of Gradient)
+  |      v v
+  '---> Gradient(xs=["X", "W"], zs=["L"], y="dO/dW") ---> d(dO/dW)dX (1st output of
+         |                                                  Gradient)
          |
          |
          '---> d^2O/dW^2 (2nd output of Gradient)
   ```
   
-  When the inputs of Gradient are the tensors named in "xs", the computation
-  can be optimized. More specifically, a forward pass can be reused if the
-  gradient is computed via reverse-mode auto-differentiation.
-  We can feed different tensors to the identified graph. For example, one
-  can compute the gradient of Y with respect to H by substituting Y_1 into Y
-  and H_1 into H.
+  The tensors named in attributes "xs", "zs", and "y" define the differentiated
+  computation graph, but the inputs to Gradient node define the values at
+  which the gradient is computed. We can feed different tensors to the identified
+  graph. For example, one can compute the gradient of Y with respect to H at 
+  a specific value of H, H_1, by providing that value as an input to the Gradient
+  node.
   
   ```
   W --> Conv --> H --> Gemm --> Y
@@ -19343,15 +19343,18 @@ expect(node, inputs=[x, y], outputs=[z],
          |              |
          X              Z
   
-             Z_1 (the 2nd input of Gradient)
+            Z_1 (2nd input of Gradient)
              |
              v
-  W_1 --> Gradient(xs=["H", "Z"], y="Y") ---> dY/dX when Y = Y_1
-           |   |
-           |   '-----------------------------------> dY/dW (2nd output of Gradient)
-           |
-           '---------------------------------------> dY/dZ (3rd output of Gradient)
+  H_1 --> Gradient(xs=["H", "Z"], y="Y") ---> dY/dH when H = H_1 and Y = Y_1.
+             |
+             '------------------------------> dY/dZ (2nd output of Gradient)
   ```
+  
+  When the inputs of Gradient are the tensors named in "xs", the computation
+  can be optimized. More specifically, intermediate variables in forward pass can
+  be reused if the gradient is computed via reverse-mode auto-differentiation.
+  
 
 #### Version
 
