@@ -717,11 +717,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MaxPool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Gradient);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MeanSquaredError);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, SoftmaxCrossEntropy);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Momentum);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Adam);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Adagrad);
 
 // Iterate over schema from ai.onnx version 12
 class OpSet_Onnx_ver12 {
