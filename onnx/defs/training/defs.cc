@@ -194,6 +194,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)",
              "tensor(float)",
              "tensor(double)"},
-            "Constrain associated inputs and outputs to floating-point tensors."));
+            "Allow inputs to be any kind of tensor."));
 
 } // namespace ONNX_NAMESPACE
