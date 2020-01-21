@@ -5,9 +5,9 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 140/157 (89.17%, 5 generators excluded) common operators.
+Node tests have covered 136/151 (90.07%, 5 generators excluded) common operators.
 
-Node tests have covered 0/0 (N/A) experimental operators.
+Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -83,182 +83,6 @@ x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
 y = np.arccosh(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acosh')
-```
-
-</details>
-
-
-### Adagrad
-There are 2 test cases, listed as following:
-<details>
-<summary>adagrad</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-epsilon = 1e-5
-decay_factor = 0.1
-
-# Create operator.
-node = onnx.helper.make_node('Adagrad',
-                             inputs=['R', 'T', 'X', 'G', 'H'],
-                             outputs=['X_new', 'H_new'],
-                             norm_coefficient=norm_coefficient,
-                             epsilon=epsilon,
-                             decay_factor=decay_factor
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-x = np.array([1.0], dtype=np.float32)
-g = np.array([-1.0], dtype=np.float32)
-h = np.array([2.0], dtype=np.float32)
-
-# Compute expected outputs of Adagrad.
-x_new, h_new = apply_adagrad(r, t, x, g, h,
-                             norm_coefficient, epsilon, decay_factor)
-
-# Check results.
-expect(node, inputs=[r, t, x, g, h],
-       outputs=[x_new, h_new], name='test_adagrad')
-```
-
-</details>
-<details>
-<summary>adagrad_multiple</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-epsilon = 1e-5
-decay_factor = 0.1
-
-node = onnx.helper.make_node('Adagrad',
-                             inputs=['R', 'T', 'X1', 'X2',
-                                     'G1', 'G2', 'H1', 'H2'],
-                             outputs=['X1_new', 'X2_new',
-                                      'H1_new', 'H2_new'],
-                             norm_coefficient=norm_coefficient,
-                             epsilon=epsilon,
-                             decay_factor=decay_factor
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-
-x1 = np.array([1.0], dtype=np.float32)
-g1 = np.array([-1.0], dtype=np.float32)
-h1 = np.array([2.0], dtype=np.float32)
-
-x2 = np.array([1.0, 2.0], dtype=np.float32)
-g2 = np.array([-1.0, -3.0], dtype=np.float32)
-h2 = np.array([4.0, 1.0], dtype=np.float32)
-
-# Compute expected outputs of Adagrad.
-x1_new, h1_new = apply_adagrad(r, t, x1, g1, h1,
-                               norm_coefficient, epsilon, decay_factor)
-x2_new, h2_new = apply_adagrad(r, t, x2, g2, h2,
-                               norm_coefficient, epsilon, decay_factor)
-
-# Check results.
-expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
-       outputs=[x1_new, x2_new, h1_new, h2_new], name='test_adagrad_multiple')
-```
-
-</details>
-
-
-### Adam
-There are 2 test cases, listed as following:
-<details>
-<summary>adam</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-alpha = 0.95
-beta = 0.1
-epsilon = 1e-7
-
-# Create operator.
-node = onnx.helper.make_node('Adam',
-                             inputs=['R', 'T', 'X', 'G', 'V', 'H'],
-                             outputs=['X_new', 'V_new', 'H_new'],
-                             norm_coefficient=norm_coefficient,
-                             alpha=alpha,
-                             beta=beta,
-                             epsilon=epsilon
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-x = np.array([1.2, 2.8], dtype=np.float32)
-g = np.array([-0.94, -2.5], dtype=np.float32)
-v = np.array([1.7, 3.6], dtype=np.float32)
-h = np.array([0.1, 0.1], dtype=np.float32)
-
-# Compute expected outputs of Adam.
-x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
-                                 norm_coefficient, alpha, beta,
-                                 epsilon)
-
-# Check results.
-expect(node, inputs=[r, t, x, g, v, h],
-       outputs=[x_new, v_new, h_new], name='test_adam')
-```
-
-</details>
-<details>
-<summary>adam_multiple</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-alpha = 0.95
-beta = 0.85
-epsilon = 1e-2
-
-node = onnx.helper.make_node('Adam',
-                             inputs=['R', 'T', 'X1', 'X2',
-                                     'G1', 'G2', 'V1', 'V2',
-                                     'H1', 'H2'],
-                             outputs=['X1_new', 'X2_new',
-                                      'V1_new', 'V2_new',
-                                      'H1_new', 'H2_new'],
-                             norm_coefficient=norm_coefficient,
-                             alpha=alpha,
-                             beta=beta
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-
-x1 = np.array([1.0], dtype=np.float32)
-g1 = np.array([-1.0], dtype=np.float32)
-v1 = np.array([2.0], dtype=np.float32)
-h1 = np.array([0.5], dtype=np.float32)
-
-x2 = np.array([1.0, 2.0], dtype=np.float32)
-g2 = np.array([-1.0, -3.0], dtype=np.float32)
-v2 = np.array([4.0, 1.0], dtype=np.float32)
-h2 = np.array([1.0, 10.0], dtype=np.float32)
-
-# Compute expected outputs of Adam.
-x1_new, v1_new, h1_new = apply_adam(r, t, x1, g1, v1, h1,
-                            norm_coefficient, alpha, beta,
-                            epsilon)
-x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
-                            norm_coefficient, alpha, beta,
-                            epsilon)
-
-# Check results.
-expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
-       outputs=[x1_new, x2_new, v1_new, v2_new, h1_new, h2_new],
-       name='test_adam_multiple')
 ```
 
 </details>
@@ -3707,96 +3531,6 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 </details>
 
 
-### Gradient
-There are 2 test cases, listed as following:
-<details>
-<summary>gradient_scalar_add</summary>
-
-```python
-add_node = onnx.helper.make_node('Add',
-                                 ['a', 'b'], ['c'], name='my_add')
-gradient_node = onnx.helper.make_node(
-    'Gradient', ['a', 'b'],
-    ['dc_da', 'dc_db'], name='my_gradient',
-    xs=['a', 'b'], y='c')
-
-a = np.array(1.0).astype(np.float32)
-b = np.array(2.0).astype(np.float32)
-c = a + b
-# dc / da = d(a+b) / da = 1
-dc_da = np.array(1).astype(np.float32)
-# db / db = d(a+b) / db = 1
-dc_db = np.array(1).astype(np.float32)
-
-graph = onnx.helper.make_graph(
-    nodes=[add_node, gradient_node],
-    name='GradientOfAdd',
-    inputs=[
-        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
-                                           []),
-        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
-                                           [])],
-    outputs=[
-        onnx.helper.make_tensor_value_info('c', onnx.TensorProto.FLOAT,
-                                           []),
-        onnx.helper.make_tensor_value_info('dc_da',
-                                           onnx.TensorProto.FLOAT, []),
-        onnx.helper.make_tensor_value_info('dc_db',
-                                           onnx.TensorProto.FLOAT, [])])
-
-model = onnx.helper.make_model(graph, producer_name='backend-test')
-expect(model, inputs=[a, b], outputs=[c, dc_da, dc_db],
-       name='test_gradient_of_add')
-```
-
-</details>
-<details>
-<summary>gradient_scalar_add_and_mul</summary>
-
-```python
-add_node = onnx.helper.make_node('Add',
-                                 ['a', 'b'], ['c'], name='my_add')
-mul_node = onnx.helper.make_node('Mul',
-                                 ['c', 'a'], ['d'], name='my_mul')
-gradient_node = onnx.helper.make_node(
-    'Gradient', ['a', 'b'],
-    ['dd_da', 'dd_db'], name='my_gradient',
-    xs=['a', 'b'], y='d')
-
-a = np.array(1.0).astype(np.float32)
-b = np.array(2.0).astype(np.float32)
-c = a + b
-# d = a * c = a * (a + b)
-d = a * c
-# dd / da = d(a*a+a*b) / da = 2 * a + b
-dd_da = 2 * a + b
-# dd / db = d(a*a+a*b) / db = a
-dd_db = a
-
-graph = onnx.helper.make_graph(
-    nodes=[add_node, mul_node, gradient_node],
-    name='GradientOfTwoOperators',
-    inputs=[
-        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
-                                           []),
-        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
-                                           [])],
-    outputs=[
-        onnx.helper.make_tensor_value_info('d', onnx.TensorProto.FLOAT,
-                                           []),
-        onnx.helper.make_tensor_value_info('dd_da',
-                                           onnx.TensorProto.FLOAT, []),
-        onnx.helper.make_tensor_value_info('dd_db',
-                                           onnx.TensorProto.FLOAT, [])])
-
-model = onnx.helper.make_model(graph, producer_name='backend-test')
-expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
-       name='test_gradient_of_add_and_mul')
-```
-
-</details>
-
-
 ### Greater
 There are 2 test cases, listed as following:
 <details>
@@ -5481,126 +5215,6 @@ y = np.array([2, 3, 8]).astype(np.uint8)
 z = np.mod(x, y)  # expected output [0, 1, 5]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mod_uint8')
-```
-
-</details>
-
-
-### Momentum
-There are 3 test cases, listed as following:
-<details>
-<summary>momentum</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-alpha = 0.95
-beta = 0.1
-
-# Create operator.
-node = onnx.helper.make_node('Momentum',
-                             inputs=['R', 'T', 'X', 'G', 'V'],
-                             outputs=['X_new', 'V_new'],
-                             norm_coefficient=norm_coefficient,
-                             alpha=alpha,
-                             beta=beta,
-                             mode='standard'
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-x = np.array([1.2, 2.8], dtype=np.float32)
-g = np.array([-0.94, -2.5], dtype=np.float32)
-v = np.array([1.7, 3.6], dtype=np.float32)
-
-# Compute expected outputs of Momentum.
-x_new, v_new = apply_momentum(r, t, x, g, v,
-                              norm_coefficient, alpha, beta)
-
-# Check results.
-expect(node, inputs=[r, t, x, g, v],
-       outputs=[x_new, v_new], name='test_momentum')
-```
-
-</details>
-<details>
-<summary>momentum_multiple</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.001
-alpha = 0.95
-beta = 0.85
-
-node = onnx.helper.make_node('Momentum',
-                             inputs=['R', 'T', 'X1', 'X2',
-                                     'G1', 'G2', 'H1', 'H2'],
-                             outputs=['X1_new', 'X2_new',
-                                      'V1_new', 'V2_new'],
-                             norm_coefficient=norm_coefficient,
-                             alpha=alpha,
-                             beta=beta,
-                             mode='standard'
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-
-x1 = np.array([1.0], dtype=np.float32)
-g1 = np.array([-1.0], dtype=np.float32)
-v1 = np.array([2.0], dtype=np.float32)
-
-x2 = np.array([1.0, 2.0], dtype=np.float32)
-g2 = np.array([-1.0, -3.0], dtype=np.float32)
-v2 = np.array([4.0, 1.0], dtype=np.float32)
-
-# Compute expected outputs of Momentum.
-x1_new, v1_new = apply_momentum(r, t, x1, g1, v1,
-                                norm_coefficient, alpha, beta)
-x2_new, v2_new = apply_momentum(r, t, x2, g2, v2,
-                                norm_coefficient, alpha, beta)
-
-# Check results.
-expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2],
-       outputs=[x1_new, x2_new, v1_new, v2_new], name='test_momentum_multiple')
-```
-
-</details>
-<details>
-<summary>nesterov_momentum</summary>
-
-```python
-# Define operator attributes.
-norm_coefficient = 0.01
-alpha = 0.95
-beta = 1.0
-
-# Create operator.
-node = onnx.helper.make_node('Momentum',
-                             inputs=['R', 'T', 'X', 'G', 'V'],
-                             outputs=['X_new', 'V_new'],
-                             norm_coefficient=norm_coefficient,
-                             alpha=alpha,
-                             beta=beta,
-                             mode='nesterov'
-                             )
-
-# Define operator inputs.
-r = np.array(0.1, dtype=np.float32)  # scalar
-t = np.array(0, dtype=np.int64)  # scalar
-x = np.array([1.2, 2.8], dtype=np.float32)
-g = np.array([-0.94, -2.5], dtype=np.float32)
-v = np.array([1.7, 3.6], dtype=np.float32)
-
-# Compute expected outputs of Adagrad.
-x_new, v_new = apply_nesterov(r, t, x, g, v,
-                              norm_coefficient, alpha, beta)
-
-# Check results.
-expect(node, inputs=[r, t, x, g, v],
-       outputs=[x_new, v_new], name='test_nesterov_momentum')
 ```
 
 </details>
@@ -11265,9 +10879,6 @@ expect(node, inputs=[x, y], outputs=[z],
 ### MaxRoiPool (call for test cases)
 
 
-### MeanSquaredError (call for test cases)
-
-
 ### Multinomial (random generator operator)
 
 
@@ -11301,9 +10912,6 @@ expect(node, inputs=[x, y], outputs=[z],
 ### SequenceLength (call for test cases)
 
 
-### SoftmaxCrossEntropy (call for test cases)
-
-
 ### SpaceToDepth (call for test cases)
 
 
@@ -11313,6 +10921,96 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F49A;Covered Experimental Operators
+### Gradient
+There are 2 test cases, listed as following:
+<details>
+<summary>gradient_scalar_add</summary>
+
+```python
+add_node = onnx.helper.make_node('Add',
+                                 ['a', 'b'], ['c'], name='my_add')
+gradient_node = onnx.helper.make_node(
+    'Gradient', ['a', 'b'],
+    ['dc_da', 'dc_db'], name='my_gradient',
+    xs=['a', 'b'], y='c')
+
+a = np.array(1.0).astype(np.float32)
+b = np.array(2.0).astype(np.float32)
+c = a + b
+# dc / da = d(a+b) / da = 1
+dc_da = np.array(1).astype(np.float32)
+# db / db = d(a+b) / db = 1
+dc_db = np.array(1).astype(np.float32)
+
+graph = onnx.helper.make_graph(
+    nodes=[add_node, gradient_node],
+    name='GradientOfAdd',
+    inputs=[
+        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
+                                           [])],
+    outputs=[
+        onnx.helper.make_tensor_value_info('c', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('dc_da',
+                                           onnx.TensorProto.FLOAT, []),
+        onnx.helper.make_tensor_value_info('dc_db',
+                                           onnx.TensorProto.FLOAT, [])])
+
+model = onnx.helper.make_model(graph, producer_name='backend-test')
+expect(model, inputs=[a, b], outputs=[c, dc_da, dc_db],
+       name='test_gradient_of_add')
+```
+
+</details>
+<details>
+<summary>gradient_scalar_add_and_mul</summary>
+
+```python
+add_node = onnx.helper.make_node('Add',
+                                 ['a', 'b'], ['c'], name='my_add')
+mul_node = onnx.helper.make_node('Mul',
+                                 ['c', 'a'], ['d'], name='my_mul')
+gradient_node = onnx.helper.make_node(
+    'Gradient', ['a', 'b'],
+    ['dd_da', 'dd_db'], name='my_gradient',
+    xs=['a', 'b'], y='d')
+
+a = np.array(1.0).astype(np.float32)
+b = np.array(2.0).astype(np.float32)
+c = a + b
+# d = a * c = a * (a + b)
+d = a * c
+# dd / da = d(a*a+a*b) / da = 2 * a + b
+dd_da = 2 * a + b
+# dd / db = d(a*a+a*b) / db = a
+dd_db = a
+
+graph = onnx.helper.make_graph(
+    nodes=[add_node, mul_node, gradient_node],
+    name='GradientOfTwoOperators',
+    inputs=[
+        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
+                                           [])],
+    outputs=[
+        onnx.helper.make_tensor_value_info('d', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('dd_da',
+                                           onnx.TensorProto.FLOAT, []),
+        onnx.helper.make_tensor_value_info('dd_db',
+                                           onnx.TensorProto.FLOAT, [])])
+
+model = onnx.helper.make_model(graph, producer_name='backend-test')
+expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
+       name='test_gradient_of_add_and_mul')
+```
+
+</details>
+
+
 <br/>
 
 ## &#x1F494;No Cover Experimental Operators
