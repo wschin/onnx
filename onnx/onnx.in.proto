@@ -95,6 +95,8 @@ enum Version {
   // - Add message TrainingInfoProto to store initialization
   //   method and training algorithm.
   // - Make inference graph callable from TrainingInfoProto.
+  // - Make inference graph's initializers visiable to
+  //   TrainingInfoProto.
   IR_VERSION = 0x0000000000000007;
 }
 
@@ -225,17 +227,20 @@ message NodeProto {
 // includes
 //   1. ModelProto.graph is a callble inside TrainingInfoProto.algorithm.
 //      Each call is a NodeProto in TrainingInfoProto.algorithm.node with
-//      NodeProto.op_type == "graph" and
+//      NodeProto.op_type == "Graph" and
 //      NodeProto.name == ModelProto.graph.name.
 //   2. Initializers in ModelProto.graph.initializer can be referenced by
 //      nodes in TrainingInfoProto.algorithm.nodes and
-//      TrainingInfoProto.initialization.nodes.
+//      TrainingInfoProto.initialization.nodes. It implies that training
+//      nodes cannot produce values with names identical to inference
+//      initializers.
 message TrainingInfoProto {
-  // This field is a graph that describes how to compute the initial tensors
+  // This field is a graph that describes a way to compute the initial tensors
   // upon starting the training process. Initialization graph has no input
   // and can have multiple outputs. Assigning those outputs to the associated
   // initializers follows the relation defined by update_binding as if
   // TrainingInfoProto.initialization is another training algorithm.
+  //
   // By default, this field is an empty graph and its evaluation does not
   // produce any output.
   optional GraphProto initialization = 1;
@@ -243,8 +248,10 @@ message TrainingInfoProto {
   // This fields is a training algorithm. Given required inputs, it computes
   // outputs to update initializers in either its own initializer list or in
   // ModelProto.graph.initializer. In general, this graph contains
-  // loss node, gradient node, optimizer node, and calls to the inference
-  // function. The field "algorithm.node" can reference functions defined in
+  // loss node, gradient node, optimizer node, increment of iteration count,
+  // and calls to the inference function.
+  //
+  // The field "algorithm.node" can reference functions defined in
   // the field "ModelProto.function". The initializers defined in
   // ModelProto.graph.initializer are visible to the "algorithm.node".
   //
@@ -264,12 +271,13 @@ message TrainingInfoProto {
   // "update_binding" may contain a pair of strings, "y"
   // (key of StringStringEntryProto) and "x" (value of StringStringEntryProto).
   // Similarly, for a neural network which contains multiple tensors, there can
-  // be multiple key-value pairs in "update_binding". In general, user cna use
-  // "update_binding" to assign any output of "algorithm" and "initialization"
-  // to any initializer in ModelProto.graph.initializer and
-  // TrainingInfoProto.algorithm.initializer. For not to break
-  // single-static-assignment, one tensor can only be assigned up to once;
-  // it implies that the values in "update_binding" must be unique.
+  // be multiple key-value pairs in "update_binding".
+  //
+  // In general, user cna use "update_binding" to assign any output of
+  // "algorithm" and "initialization" to any initializer in
+  // ModelProto.graph.initializer and TrainingInfoProto.algorithm.initializer.
+  // One initializer can only be assigned up to once; it implies that the
+  // values in "update_binding" must be unique.
   repeated StringStringEntryProto update_binding = 3;
 }
 
