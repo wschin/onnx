@@ -38,7 +38,7 @@ cp -r "$PWD" "$ONNX_DIR"
 
 # install ninja to speedup the build
 pip install scikit-build
-pip install ninja
+apt-get install ninja-build
 
 # install pytorch
 cd $PYTORCH_DIR
