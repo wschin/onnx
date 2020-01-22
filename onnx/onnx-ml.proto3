@@ -674,5 +674,6 @@ message OperatorSetIdProto {
   int64 version = 2;
 }
 
-// For using protobuf-lite  
+// For using protobuf-lite
 option optimize_for = LITE_RUNTIME;
+
