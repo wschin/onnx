@@ -14106,24 +14106,24 @@ No versioning maintained for experimental ops.
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>Inputs</tt> (variadic, heterogeneous) : T2</dt>
+<dt><tt>Inputs</tt> (variadic, heterogeneous) : T1</dt>
 <dd>The values fed into graph identified by the attributes. The i-th input is the value of the i-th tensor specified in the concatenated list of attribute "xs" and attribute "zs". For example, if xs=["A", "B"] and zs=["C"], the first input is used as the value of symbol "A" and the 3rd input is substituted for all the occurrences of "C".</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>Outputs</tt> (variadic, heterogeneous) : T1</dt>
+<dt><tt>Outputs</tt> (variadic, heterogeneous) : T2</dt>
 <dd>The gradient of the tensors specified in attribute "y" with respect to "xs". The i-th output is the gradient of "y" with respect to the i-th tensor specified in the attribute "xs".</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain associated inputs and outputs to floating-point tensors.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
-<dd>Allow associated inputs and outputs to be any kinds of tensors.</dd>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Allow outputs to be any kinds of tensors.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Allow inputs to be any kind of tensor.</dd>
 </dl>
 
 ### <a name="MaxPool-12"></a>**MaxPool-12**</a>
