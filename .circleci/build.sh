@@ -26,7 +26,7 @@ if [[ "${CIRCLE_JOB}" =~ py((2|3)\.?[0-9]?\.?[0-9]?) ]]; then
 fi
 $PYTHON -m virtualenv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
-pip install -U pip setuptools
+pip install -U pip==19 setuptools
 
 # setup onnx as the submodule of pytorch
 PYTORCH_DIR=/tmp/pytorch
@@ -37,8 +37,7 @@ rm -rf "$ONNX_DIR"
 cp -r "$PWD" "$ONNX_DIR"
 
 # install ninja to speedup the build
-pip install scikit-build
-apt-get install ninja-build
+pip install ninja
 
 # install pytorch
 cd $PYTORCH_DIR
