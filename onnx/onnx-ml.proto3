@@ -214,14 +214,14 @@ message NodeProto {
 // TrainingInfoProto.algorithm.initializer and ModelProto.graph.initializer.
 //
 // If there are multiple TrainingInfoProto's, sequentially executing all of
-// them once consistutes a full training algorithm. The initializer update
+// them once constitutes a full training algorithm step. The initializer update
 // happens at the end of each TrainingInfoProto's execution. If the targeted
 // training algorithm contains consecutive update stages (such as block
 // coordinate descent methods), the user needs to create a TrainingInfoProto
 // for each stage.
 //
-// The execution of TrainingInfoProto has two mode. User can choose to execute
-// either "algorithm" or "initialization". The computation specified in
+// The execution of TrainingInfoProto has two modes. The user can choose to
+// execute either "algorithm" or "initialization". The computation specified in
 // "training" improves initializers based on the given training data. The
 // computation specified in "initialization" resets the model to its
 // initial state (as if no training data has been consumed).
@@ -248,15 +248,15 @@ message TrainingInfoProto {
   // produce any output.
   GraphProto initialization = 1;
 
-  // This fields is a training algorithm. Given required inputs, it computes
-  // outputs to update initializers in either its own initializer list or in
-  // ModelProto.graph.initializer. In general, this graph contains
+  // This field represents a training algorithm step. Given required inputs,
+  // it computes outputs to update initializers in either its own initializer
+  // list or in ModelProto.graph.initializer. In general, this graph contains
   // loss node, gradient node, optimizer node, increment of iteration count,
-  // and calls to the inference function.
+  // and calls to the inference graph.
   //
-  // The field "algorithm.node" can reference functions defined in
-  // the field "ModelProto.function". The initializers defined in
-  // ModelProto.graph.initializer are visible to the "algorithm.node".
+  // The field algorithm.node can invoke ModelProto.graph as a node.
+  // The initializers defined in ModelProto.graph.initializer are visible in
+  // the "algorithm".
   //
   // The field MUST be present.
   GraphProto algorithm = 2;
@@ -268,15 +268,15 @@ message TrainingInfoProto {
   //
   // where "x" is the optimized tensor, "r" stands for learning rate, and "g" is
   // gradient of "x" with respect to a chosen loss. To avoid adding assignments
-  // into the training graph (ONNX does not have assignment operator yet), the
-  // user need to save "y = x - r * g" into a TrainingInfoProto.algorithm. To
+  // into the training graph, the
+  // user needs to save "y = x - r * g" into a TrainingInfoProto.algorithm. To
   // tell runtime that "y" should be assigned to "x", the field
   // "update_binding" may contain a pair of strings, "y"
   // (key of StringStringEntryProto) and "x" (value of StringStringEntryProto).
   // Similarly, for a neural network which contains multiple tensors, there can
   // be multiple key-value pairs in "update_binding".
   //
-  // In general, user cna use "update_binding" to assign any output of
+  // In general, the user can use "update_binding" to assign any output of
   // "algorithm" and "initialization" to any initializer in
   // ModelProto.graph.initializer and TrainingInfoProto.algorithm.initializer.
   // One initializer can only be assigned up to once; it implies that the
